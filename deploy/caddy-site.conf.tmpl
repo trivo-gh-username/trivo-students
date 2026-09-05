@@ -1,0 +1,39 @@
+# trivo-students/deploy/caddy-site.conf.tmpl
+#
+# Resolved by scripts/deploy.sh (envsubst, using this app's own .env) into
+# edge/sites/trivo-students.conf. Edit THIS file, never the resolved copy
+# in edge/sites/ — it gets overwritten on every deploy.
+#
+# Fully self-contained: does not touch, depend on, or reference
+# trivo-lean's or ai-vision-demo's DOMAIN/config in any way.
+
+http://${DOMAIN} {
+	redir https://{host}{uri} permanent
+}
+
+${DOMAIN} {
+	encode zstd gzip
+
+	header {
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=(), interest-cohort=()"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		-Server
+	}
+
+	@hashed {
+		path_regexp hashed ^/(css|js)/[^/]+\.[a-f0-9]{8,}\.(css|js)$
+	}
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+	reverse_proxy trivo-students-app:3000 {
+		health_uri /healthz
+		health_interval 30s
+		health_timeout 5s
+		transport http {
+			keepalive 65s
+		}
+	}
+}

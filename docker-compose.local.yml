@@ -1,0 +1,34 @@
+# Local development only. Direct port mapping, no Caddy, no edge/ needed.
+services:
+  app:
+    build: .
+    ports:
+      - "3100:3000"
+    environment:
+      DATABASE_URL: postgres://trivostudents:localdev@db:5432/trivo_students
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-localdev}
+      SESSION_SECRET: ${SESSION_SECRET:-local-dev-secret-please-change}
+      HOST: 0.0.0.0
+      PORT: 3000
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./server:/app/server
+      - ./admin:/app/admin
+      - ./css:/app/css
+      - ./js:/app/js
+      - ./data:/app/data
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: trivostudents
+      POSTGRES_PASSWORD: localdev
+      POSTGRES_DB: trivo_students
+    ports:
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trivostudents -d trivo_students"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

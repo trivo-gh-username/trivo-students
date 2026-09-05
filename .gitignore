@@ -1,0 +1,14 @@
+# Dependencies
+node_modules
+
+# Local secrets — never commit these
+.env
+.env.*
+!.env.example
+
+# OS / editor cruft
+.DS_Store
+*.log
+
+# Local Postgres volume data if ever bind-mounted instead of a named volume
+pgdata/

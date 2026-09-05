@@ -1,0 +1,68 @@
+# trivo-students/docker-compose.yml — fully independent of trivo-lean.
+# Own Postgres, own admin, own everything, joining the shared `edge`
+# network (see ../edge/README.md) only for public HTTP traffic.
+
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/YOUR_ORG/trivo-students:latest}
+    container_name: trivo-students-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-trivostudents}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-trivo_students}
+      HOST: 0.0.0.0
+      PORT: 3000
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 150m
+    cpus: "0.3"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - internal
+      - edge
+
+  db:
+    image: postgres:16-alpine
+    container_name: trivo-students-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-trivostudents}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-trivo_students}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    command: >
+      postgres
+      -c shared_buffers=24MB
+      -c max_connections=20
+      -c work_mem=2MB
+      -c effective_cache_size=96MB
+    mem_limit: 128m
+    cpus: "0.3"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-trivostudents} -d ${POSTGRES_DB:-trivo_students}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - internal
+    # Deliberately NOT on the `edge` network — no path from Caddy or any
+    # other app on the host to this database.
+
+volumes:
+  pgdata:
+
+networks:
+  internal:
+    driver: bridge
+    internal: true
+  edge:
+    name: edge
+    external: true

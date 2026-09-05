@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Register — Trivo Student Programs</title>
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/app.css" />
+<style>
+  /* This is the TEMPORARY single-page form — see README.md "What's
+     temporary here." The real version will be a multi-step, save-as-you-go
+     experience with interleaved educational content. This is deliberately
+     minimal in the meantime. */
+  .form-wrap { max-width: 560px; margin: var(--s-9) auto var(--s-8); padding-inline: var(--s-5); position: relative; z-index: 1; }
+  .form-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s-7); }
+  .field { margin-bottom: var(--s-5); }
+  .field label { display: block; font-size: var(--t-xs); font-weight: 600; color: var(--fg-muted); margin-bottom: var(--s-2); }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 0.85rem 1rem; border-radius: var(--r-sm);
+    border: 1px solid var(--line-strong); background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: var(--t-sm);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .honeypot { position: absolute; left: -9999px; }
+  .form-note { font-size: var(--t-xs); color: var(--fg-subtle); margin-top: var(--s-4); }
+  .thankyou { text-align: center; padding: var(--s-6) 0; }
+  .thankyou__title { font-family: var(--font-display); font-size: var(--t-xl); color: var(--accent-2); margin-bottom: var(--s-3); }
+  .alert-err { display: none; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.4); color: var(--warn); padding: var(--s-4); border-radius: var(--r-sm); margin-bottom: var(--s-5); font-size: var(--t-sm); }
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<nav class="nav">
+  <a class="nav__brand" href="index.html">Trivo<span>.</span> Students</a>
+</nav>
+
+<div class="form-wrap">
+  <h1 style="font-family:var(--font-display); font-size: var(--t-2xl); margin-bottom: var(--s-2);">Register your interest</h1>
+  <p style="color: var(--fg-muted); margin-bottom: var(--s-7);">Takes about 2 minutes. We'll follow up with a personalized recommendation.</p>
+
+  <div class="form-card">
+    <div class="alert-err" id="formErr">That didn't go through. Please try again, or email <a href="mailto:students@trivoailabs.com" style="color:var(--accent-2);">students@trivoailabs.com</a> directly.</div>
+
+    <div class="thankyou" id="thankyou" hidden>
+      <p class="thankyou__title">You're in ✓</p>
+      <p style="color: var(--fg-muted);">Thanks for registering — we'll be in touch shortly with next steps.</p>
+      <a class="btn btn--ghost" href="index.html" style="margin-top: var(--s-5);">Back to home</a>
+    </div>
+
+    <form id="regForm">
+      <p class="honeypot" aria-hidden="true">
+        <label>Do not fill this in
+          <input type="text" name="company-website" tabindex="-1" autocomplete="off" />
+        </label>
+      </p>
+
+      <div class="field">
+        <label for="f-name">Full name *</label>
+        <input id="f-name" name="name" type="text" required autocomplete="name" />
+      </div>
+      <div class="field">
+        <label for="f-email">Email *</label>
+        <input id="f-email" name="email" type="email" required autocomplete="email" />
+      </div>
+      <div class="field">
+        <label for="f-phone">Phone</label>
+        <input id="f-phone" name="phone" type="tel" autocomplete="tel" />
+      </div>
+      <div class="field">
+        <label for="f-college">College / year (optional)</label>
+        <input id="f-college" name="college" type="text" placeholder="e.g. XYZ Engineering College, 2nd year" />
+      </div>
+      <div class="field">
+        <label for="f-path">Which path interests you?</label>
+        <select id="f-path" name="path">
+          <option value="">Not sure yet — recommend one</option>
+          <option value="beginner">Just starting out</option>
+          <option value="some">Ready to build real projects</option>
+          <option value="advanced">Ready to go deep (agents, advanced systems)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-message">Anything else we should know?</label>
+        <textarea id="f-message" name="message" rows="3"></textarea>
+      </div>
+
+      <button class="btn btn--primary" type="submit" style="width:100%; justify-content:center;">Register now</button>
+      <p class="form-note">By registering you agree to be contacted about Trivo's student programmes. We don't share your details with anyone else.</p>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var form = document.getElementById('regForm');
+    var thankyou = document.getElementById('thankyou');
+    var errBox = document.getElementById('formErr');
+    form.dataset.renderedAt = String(Date.now());
+
+    // Pre-fill the path from the landing-page quiz, if the visitor came from there.
+    var params = new URLSearchParams(location.search);
+    var path = params.get('path');
+    if (path) {
+      var sel = document.getElementById('f-path');
+      if (sel && sel.querySelector('option[value="' + path + '"]')) sel.value = path;
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      errBox.style.display = 'none';
+      var fd = new FormData(form);
+      var payload = {
+        name: fd.get('name'),
+        email: fd.get('email'),
+        phone: fd.get('phone'),
+        college: fd.get('college'),
+        path: fd.get('path'),
+        message: fd.get('message'),
+        'company-website': fd.get('company-website'),
+        'form-rendered-at': Number(form.dataset.renderedAt)
+      };
+      var btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+
+      fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function (res) {
+        if (!res.ok) return res.json().then(function (d) { throw new Error(d.error || 'Failed'); });
+        return res.json();
+      }).then(function () {
+        form.hidden = true;
+        thankyou.hidden = false;
+      }).catch(function (err) {
+        errBox.textContent = err.message && err.message.indexOf('Too many') !== -1
+          ? err.message
+          : "That didn't go through. Please try again, or email students@trivoailabs.com directly.";
+        errBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Register now';
+      });
+    });
+  })();
+</script>
+</body>
+</html>

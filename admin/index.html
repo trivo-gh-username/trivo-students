@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Trivo Student Programs</title>
+<meta name="robots" content="noindex, nofollow" />
+<style>
+  :root {
+    --bg: #0a0a0f; --bg-card: #15151f; --line: #26262f; --line-strong: #34343f;
+    --fg: #f5f5f7; --fg-muted: #a8a8b8; --accent: #7c5cff; --accent-fg: #fff;
+    --success: #34d399; --err: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: -apple-system, Inter, system-ui, sans-serif; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+  h1 { font-size: 1.5rem; margin: 0 0 0.25rem; }
+  .muted { color: var(--fg-muted); font-size: 0.875rem; }
+  .card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 0.875rem; padding: 1.5rem; margin-top: 1.5rem; }
+  label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--fg-muted); margin-bottom: 0.35rem; }
+  input, textarea, select { width: 100%; padding: 0.65rem 0.85rem; border-radius: 0.5rem; border: 1px solid var(--line-strong); background: var(--bg); color: var(--fg); font-family: inherit; font-size: 0.9rem; margin-bottom: 1rem; }
+  button { font-family: inherit; font-weight: 600; font-size: 0.85rem; padding: 0.6rem 1.2rem; border-radius: 999px; border: 1px solid var(--line-strong); background: transparent; color: var(--fg); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+  button.danger { border-color: rgba(248,113,113,0.4); color: var(--err); }
+  .row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 0.5rem; margin: 1.5rem 0 0; }
+  .tab { padding: 0.5rem 1rem; border-radius: 999px; border: 1px solid var(--line-strong); background: transparent; color: var(--fg-muted); cursor: pointer; font-size: 0.85rem; }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 0.6rem 0.5rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--fg-muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .status-pill { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--line-strong); }
+  #loginScreen { max-width: 360px; margin: 15vh auto 0; text-align: center; }
+  #toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--bg-card); border: 1px solid var(--line-strong); padding: 0.6rem 1.2rem; border-radius: 999px; font-size: 0.85rem; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  #toast.show { opacity: 1; }
+  .rows { display: grid; gap: 0.5rem; }
+  .item-list-row { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: start; border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.75rem; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <h1>Admin</h1>
+  <p class="muted">Trivo Student Programs</p>
+  <div class="card">
+    <label for="loginPassword">Password</label>
+    <input id="loginPassword" type="password" autocomplete="current-password" />
+    <button class="primary" id="btnLogin" style="width:100%;">Sign in</button>
+    <p class="muted" id="loginErr" style="color:var(--err); display:none; margin-top:0.75rem;"></p>
+  </div>
+</div>
+
+<div class="wrap" id="app" hidden>
+  <div class="row" style="justify-content: space-between;">
+    <div>
+      <h1>Trivo Student Programs — Admin</h1>
+      <p class="muted" id="metaLine"></p>
+    </div>
+    <button id="btnLogout">Sign out</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-panel="content">Site content</button>
+    <button class="tab" data-panel="registrations">Registrations</button>
+  </div>
+
+  <div class="panel active" id="panel-content">
+    <div class="card">
+      <label>Hero headline</label>
+      <input id="c-hero-headline" />
+      <label>Hero subhead</label>
+      <textarea id="c-hero-subhead" rows="2"></textarea>
+      <label>Primary CTA label</label>
+      <input id="c-hero-cta" />
+      <button class="primary" id="btnSaveHero">Save hero</button>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">Gap stats</h3>
+      <p class="muted">Four stat callouts on the landing page. One per row: <code>value | label</code>.</p>
+      <textarea id="c-stats" rows="5" placeholder="70% | of new job postings now mention AI tools"></textarea>
+      <button class="primary" id="btnSaveStats">Save stats</button>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">Courses</h3>
+      <p class="muted">One per line: <code>Name | Label | Duration | Hours | Description</code></p>
+      <textarea id="c-courses" rows="8"></textarea>
+      <button class="primary" id="btnSaveCourses">Save courses</button>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">FAQ</h3>
+      <p class="muted">One per line: <code>Question | Answer</code></p>
+      <textarea id="c-faq" rows="6"></textarea>
+      <button class="primary" id="btnSaveFaq">Save FAQ</button>
+    </div>
+
+    <div class="card">
+      <p class="muted">Editing raw JSON directly (advanced) — everything above writes into this same document.</p>
+      <textarea id="c-raw" rows="14" style="font-family: ui-monospace, monospace; font-size: 0.8rem;"></textarea>
+      <button class="primary" id="btnSaveRaw">Save raw JSON</button>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-registrations">
+    <div class="card">
+      <div class="row" style="justify-content: space-between; margin-bottom: 1rem;">
+        <strong>Registrations</strong>
+        <button id="btnRefreshRegs">Refresh</button>
+      </div>
+      <table>
+        <thead><tr><th>When</th><th>Name</th><th>Email</th><th>Path</th><th>Status</th><th></th></tr></thead>
+        <tbody id="regsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  var TOKEN_KEY = 'trivo-students-admin-token';
+  var token = sessionStorage.getItem(TOKEN_KEY);
+  var content = null;
+
+  function toast(msg) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(function () { el.classList.remove('show'); }, 2000);
+  }
+
+  function api(method, path, body) {
+    var headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = 'Bearer ' + token;
+    return fetch('/api/' + path, { method: method, headers: headers, body: body ? JSON.stringify(body) : undefined })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+          return data;
+        });
+      });
+  }
+
+  function showApp() {
+    document.getElementById('loginScreen').hidden = true;
+    document.getElementById('app').hidden = false;
+    loadContent();
+  }
+
+  document.getElementById('btnLogin').addEventListener('click', function () {
+    var pw = document.getElementById('loginPassword').value;
+    api('POST', 'auth/login', { password: pw }).then(function (res) {
+      token = res.token;
+      sessionStorage.setItem(TOKEN_KEY, token);
+      showApp();
+    }).catch(function (err) {
+      var e = document.getElementById('loginErr');
+      e.textContent = err.message || 'Login failed';
+      e.style.display = 'block';
+    });
+  });
+  document.getElementById('loginPassword').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('btnLogin').click();
+  });
+  document.getElementById('btnLogout').addEventListener('click', function () {
+    sessionStorage.removeItem(TOKEN_KEY);
+    location.reload();
+  });
+
+  document.querySelectorAll('.tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+      document.querySelectorAll('.panel').forEach(function (p) { p.classList.remove('active'); });
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+      if (tab.dataset.panel === 'registrations') loadRegistrations();
+    });
+  });
+
+  function loadContent() {
+    api('GET', 'content').then(function (data) {
+      content = data;
+      document.getElementById('metaLine').textContent = 'Loaded.';
+      var h = content.hero || {};
+      document.getElementById('c-hero-headline').value = h.headline || '';
+      document.getElementById('c-hero-subhead').value = h.subhead || '';
+      document.getElementById('c-hero-cta').value = h.primaryCta || '';
+
+      var stats = (content.gapStats && content.gapStats.items) || [];
+      document.getElementById('c-stats').value = stats.map(function (s) { return s.value + ' | ' + s.label; }).join('\n');
+
+      var courses = (content.courses && content.courses.items) || [];
+      document.getElementById('c-courses').value = courses.map(function (c) {
+        return [c.name, c.label, c.duration, c.hours, c.description].join(' | ');
+      }).join('\n');
+
+      var faq = (content.faq && content.faq.items) || [];
+      document.getElementById('c-faq').value = faq.map(function (f) { return f.question + ' | ' + f.answer; }).join('\n');
+
+      document.getElementById('c-raw').value = JSON.stringify(content, null, 2);
+    });
+  }
+
+  function save(patchFn, label) {
+    patchFn(content);
+    api('POST', 'content', { content: content }).then(function () {
+      toast(label + ' saved');
+    }).catch(function (err) { toast('Save failed: ' + err.message); });
+  }
+
+  document.getElementById('btnSaveHero').addEventListener('click', function () {
+    save(function (c) {
+      c.hero = c.hero || {};
+      c.hero.headline = document.getElementById('c-hero-headline').value;
+      c.hero.subhead = document.getElementById('c-hero-subhead').value;
+      c.hero.primaryCta = document.getElementById('c-hero-cta').value;
+    }, 'Hero');
+  });
+
+  document.getElementById('btnSaveStats').addEventListener('click', function () {
+    save(function (c) {
+      c.gapStats = c.gapStats || { visible: true };
+      c.gapStats.items = document.getElementById('c-stats').value.split('\n').filter(Boolean).map(function (line, i) {
+        var parts = line.split('|').map(function (s) { return s.trim(); });
+        return { id: 's' + (i + 1), value: parts[0] || '', label: parts[1] || '' };
+      });
+    }, 'Stats');
+  });
+
+  document.getElementById('btnSaveCourses').addEventListener('click', function () {
+    save(function (c) {
+      c.courses = c.courses || { visible: true };
+      c.courses.items = document.getElementById('c-courses').value.split('\n').filter(Boolean).map(function (line, i) {
+        var parts = line.split('|').map(function (s) { return s.trim(); });
+        return {
+          id: 'c' + (i + 1), name: parts[0] || '', label: parts[1] || '',
+          duration: parts[2] || '', hours: parseInt(parts[3], 10) || 0,
+          description: parts[4] || '', tags: []
+        };
+      });
+    }, 'Courses');
+  });
+
+  document.getElementById('btnSaveFaq').addEventListener('click', function () {
+    save(function (c) {
+      c.faq = c.faq || { visible: true };
+      c.faq.items = document.getElementById('c-faq').value.split('\n').filter(Boolean).map(function (line, i) {
+        var parts = line.split('|').map(function (s) { return s.trim(); });
+        return { id: 'f' + (i + 1), question: parts[0] || '', answer: parts[1] || '', visible: true };
+      });
+    }, 'FAQ');
+  });
+
+  document.getElementById('btnSaveRaw').addEventListener('click', function () {
+    var parsed;
+    try { parsed = JSON.parse(document.getElementById('c-raw').value); }
+    catch (e) { toast('Invalid JSON: ' + e.message); return; }
+    content = parsed;
+    api('POST', 'content', { content: content }).then(function () {
+      toast('Raw JSON saved');
+      loadContent();
+    }).catch(function (err) { toast('Save failed: ' + err.message); });
+  });
+
+  function loadRegistrations() {
+    api('GET', 'registrations').then(function (res) {
+      var body = document.getElementById('regsBody');
+      body.innerHTML = (res.rows || []).map(function (r) {
+        var d = r.data || {};
+        var when = new Date(r.created_at).toLocaleString();
+        return '<tr>' +
+          '<td>' + when + '</td>' +
+          '<td>' + escapeHtml(d.name || '') + '</td>' +
+          '<td>' + escapeHtml(d.email || '') + '<br><span class="muted">' + escapeHtml(d.phone || '') + '</span></td>' +
+          '<td>' + escapeHtml(d.path || d.college || '') + '</td>' +
+          '<td><span class="status-pill">' + escapeHtml(r.status) + '</span></td>' +
+          '<td><button class="danger" data-del="' + r.id + '">Delete</button></td>' +
+          '</tr>';
+      }).join('') || '<tr><td colspan="6" class="muted">No registrations yet.</td></tr>';
+      body.querySelectorAll('[data-del]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!confirm('Delete this registration?')) return;
+          api('DELETE', 'registrations/' + btn.dataset.del).then(loadRegistrations);
+        });
+      });
+    });
+  }
+  document.getElementById('btnRefreshRegs').addEventListener('click', loadRegistrations);
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  if (token) showApp();
+})();
+</script>
+</body>
+</html>
