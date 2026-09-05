@@ -4,7 +4,7 @@
 
 services:
   app:
-    image: ${IMAGE:-ghcr.io/YOUR_ORG/trivo-students:latest}
+    image: ${IMAGE:-ghcr.io/trivo-gh-username/trivo-students:latest}
     container_name: trivo-students-app
     restart: unless-stopped
     env_file: .env
