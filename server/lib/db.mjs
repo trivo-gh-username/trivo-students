@@ -131,10 +131,10 @@ async function saveContent(data) {
   return { updatedAt: new Date().toISOString() };
 }
 
-async function createRegistration({ data }) {
+async function createRegistration({ data, status = "new" }) {
   await ensureSeeded();
   const database = getDb();
-  const [row] = await database.insert(registrations).values({ data }).returning();
+  const [row] = await database.insert(registrations).values({ data, status }).returning();
   return row;
 }
 

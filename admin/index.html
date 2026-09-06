@@ -111,8 +111,9 @@
         <strong>Registrations</strong>
         <button id="btnRefreshRegs">Refresh</button>
       </div>
+      <p class="muted" id="regsSummary" style="margin-top:0;"></p>
       <table>
-        <thead><tr><th>When</th><th>Name</th><th>Email</th><th>Path</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>When</th><th>Name</th><th>Contact</th><th>Branch / year</th><th>Interest</th><th>Status</th><th></th></tr></thead>
         <tbody id="regsBody"></tbody>
       </table>
     </div>
@@ -267,25 +268,53 @@
     }).catch(function (err) { toast('Save failed: ' + err.message); });
   });
 
+  // The registration form has changed shape over time (see README — the
+  // `data` column is deliberately schema-less on purpose), so this reads
+  // defensively across both the old short form (name/email/phone/college/
+  // path/message) and the new multi-step questionnaire (whatsapp/branch/
+  // year/intent/roles/etc). Whatever the payload looks like, "View" always
+  // shows every field that was actually submitted — the admin list never
+  // has to be updated in lockstep with the form again.
   function loadRegistrations() {
     api('GET', 'registrations').then(function (res) {
+      var rows = res.rows || [];
+      var flaggedCount = rows.filter(function (r) { return r.status === 'flagged'; }).length;
+      document.getElementById('regsSummary').textContent =
+        rows.length + ' total' + (flaggedCount ? ' · ' + flaggedCount + ' flagged as likely spam/bot (kept, not deleted, for review)' : '');
+
       var body = document.getElementById('regsBody');
-      body.innerHTML = (res.rows || []).map(function (r) {
+      body.innerHTML = rows.map(function (r) {
         var d = r.data || {};
         var when = new Date(r.created_at).toLocaleString();
+        var contact = escapeHtml(d.email || '') + '<br><span class="muted">' + escapeHtml(d.whatsapp || d.phone || '') + '</span>';
+        var branchYear = [d.branch, d.year].filter(Boolean).map(escapeHtml).join('<br>') || escapeHtml(d.college || '');
+        var interest = escapeHtml(d.intent || d.path || (Array.isArray(d.roles) ? d.roles.join(', ') : '') || '');
+        var statusStyle = r.status === 'flagged' ? ' style="background:rgba(248,113,113,0.18); color:var(--err);"' : '';
         return '<tr>' +
           '<td>' + when + '</td>' +
           '<td>' + escapeHtml(d.name || '') + '</td>' +
-          '<td>' + escapeHtml(d.email || '') + '<br><span class="muted">' + escapeHtml(d.phone || '') + '</span></td>' +
-          '<td>' + escapeHtml(d.path || d.college || '') + '</td>' +
-          '<td><span class="status-pill">' + escapeHtml(r.status) + '</span></td>' +
-          '<td><button class="danger" data-del="' + r.id + '">Delete</button></td>' +
+          '<td>' + contact + '</td>' +
+          '<td>' + branchYear + '</td>' +
+          '<td>' + interest + '</td>' +
+          '<td><span class="status-pill"' + statusStyle + '>' + escapeHtml(r.status) + '</span></td>' +
+          '<td class="row" style="gap:0.4rem; flex-wrap:nowrap;">' +
+            '<button data-view="' + r.id + '">View</button>' +
+            '<button class="danger" data-del="' + r.id + '">Delete</button>' +
+          '</td>' +
           '</tr>';
-      }).join('') || '<tr><td colspan="6" class="muted">No registrations yet.</td></tr>';
+      }).join('') || '<tr><td colspan="7" class="muted">No registrations yet.</td></tr>';
+
       body.querySelectorAll('[data-del]').forEach(function (btn) {
         btn.addEventListener('click', function () {
           if (!confirm('Delete this registration?')) return;
           api('DELETE', 'registrations/' + btn.dataset.del).then(loadRegistrations);
+        });
+      });
+      body.querySelectorAll('[data-view]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var r = rows.find(function (x) { return x.id === btn.dataset.view; });
+          if (!r) return;
+          alert(JSON.stringify(r.data, null, 2));
         });
       });
     });

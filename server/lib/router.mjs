@@ -126,13 +126,33 @@ export async function handleApi(req, res, url) {
     if (resource === "register" && !id && req.method === "POST") {
       const ip = ratelimit.clientIp(req);
 
-      // Honeypot — same pattern as trivo-lean's contact form.
+      // NOTE on the bug this used to have: the honeypot and timing-trap
+      // checks below used to `return send(res, 200, { ok: true })` WITHOUT
+      // ever calling db.createRegistration — i.e. a real visitor who
+      // tripped either heuristic (e.g. a password manager / autofill that
+      // fills the form in under 1.5s, or a screen reader that focuses the
+      // hidden honeypot field) saw a normal "success" screen while their
+      // submission was silently thrown away. Nothing was ever logged or
+      // stored, so it looked like the form "just sometimes doesn't work."
+      //
+      // Fix: we still don't want to tip off bots (the client response is
+      // identical either way), but we now ALWAYS persist the submission.
+      // Suspected-bot submissions are stored with status "flagged" instead
+      // of "new" so a human can review/ignore them in /admin/ — nothing a
+      // real student submits is ever dropped on the floor again.
+      let suspicious = false;
+      let suspicionReason = "";
+
       if (body.honeypot || body["company-website"]) {
-        return send(res, 200, { ok: true });
+        suspicious = true;
+        suspicionReason = "honeypot";
       }
 
       const gate = ratelimit.check(ip);
       if (!gate.ok) {
+        // Rate limiting is a real, user-visible rejection — the form
+        // correctly shows an error for this, so it must stay a real error
+        // response, not a faked success.
         return send(res, 429, { error: gate.reason }, { "Retry-After": String(gate.retryAfterSeconds) });
       }
 
@@ -140,14 +160,16 @@ export async function handleApi(req, res, url) {
       delete data.honeypot;
       delete data["company-website"];
 
-      // Timing trap — same pattern as trivo-lean's contact form.
+      // Timing trap — same idea as trivo-lean's contact form, but now only
+      // used as a *signal*, never to silently discard a submission.
       const MIN_SUBMIT_MS = 1500;
       const renderedAt = Number(data["form-rendered-at"]);
       delete data["form-rendered-at"];
       if (renderedAt && Number.isFinite(renderedAt)) {
         const elapsed = Date.now() - renderedAt;
         if (elapsed >= 0 && elapsed < MIN_SUBMIT_MS) {
-          return send(res, 200, { ok: true });
+          suspicious = true;
+          suspicionReason = suspicionReason ? suspicionReason + "+timing" : "timing";
         }
       }
 
@@ -155,9 +177,15 @@ export async function handleApi(req, res, url) {
         return send(res, 400, { error: "Name and email are required." });
       }
 
-      const created = await db.createRegistration({ data });
-      ratelimit.record(ip);
-      await db.logAudit("public", "create", "registration", created.id);
+      const created = await db.createRegistration({
+        data,
+        status: suspicious ? "flagged" : "new",
+      });
+      // Don't let suspected-bot traffic burn through a real visitor's rate
+      // limit budget on a shared campus network, but do still record real
+      // submissions.
+      if (!suspicious) ratelimit.record(ip);
+      await db.logAudit("public", "create", "registration", created.id + (suspicionReason ? ` (flagged: ${suspicionReason})` : ""));
       return send(res, 201, { ok: true, id: created.id });
     }
 
