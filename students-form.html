@@ -566,7 +566,7 @@
     renderResumeBanner();
     if (stepIndex === -1) return renderIntro();
     if (stepIndex === STEPS.length) return renderOutro();
-    renderStep(STEPS[stepIndex]);
+    renderStep(STEPS[stepIndex], true);
   }
 
   function renderIntro() {
@@ -590,11 +590,18 @@
     });
   }
 
-  function renderStep(step) {
+  // isNav = true only when actually navigating onto this screen (Back /
+  // Continue / initial load). false when we're just re-rendering the same
+  // screen in place to reflect a selection you just made — that re-render
+  // must NOT replay the screen's entrance animation or steal focus back
+  // to the first text field, both of which used to happen on every single
+  // tap because this function didn't distinguish the two cases.
+  function renderStep(step, isNav) {
     actions.hidden = false;
     setProgress(stepIndex === 0 ? 0 : STEPS[stepIndex - 1].weight);
 
-    var html = '<div class="qz-card ' + (lastDirection === 'back' ? 'qz-step-in-back' : 'qz-step-in-fwd') + '">' +
+    var entranceClass = isNav ? (lastDirection === 'back' ? ' qz-step-in-back' : ' qz-step-in-fwd') : '';
+    var html = '<div class="qz-card' + entranceClass + '">' +
       '<div class="qz-eyebrow"><span class="qz-eyebrow__num">' + (stepIndex + 1) + ' / ' + STEPS.length + '</span><span class="qz-eyebrow__section">' + esc(step.section) + '</span></div>' +
       '<div class="qz-alert" id="qzStepAlert"></div>' +
       '<h2 class="qz-prompt">' + esc(step.title) + '</h2>' +
@@ -614,7 +621,7 @@
 
     html += '</div>';
     stage.innerHTML = html;
-    wireStep(step);
+    wireStep(step, isNav);
     backBtn.style.visibility = stepIndex === 0 ? 'hidden' : 'visible';
     updateNextState(step);
   }
@@ -657,7 +664,7 @@
       }).join('') + '</div>';
   }
 
-  function wireStep(step) {
+  function wireStep(step, isNav) {
     step.fields.forEach(function (field) {
       if (field.type === 'text') {
         var input = document.getElementById('f_' + field.id);
@@ -684,7 +691,7 @@
               }
               answers[field.id] = list;
             }
-            renderStep(step); // re-render this screen to reflect the new selection state
+            renderStep(step, false); // re-render this screen to reflect the new selection state — NOT a navigation, so no entrance animation / no refocus
             saveDraft();
             // Animate ONLY the pill that was just tapped, not every already
             // -selected pill on the screen (that was the "weird" jittery
@@ -716,7 +723,7 @@
             var row = field.rows[Number(chip.dataset.row)];
             answers[field.id] = answers[field.id] || {};
             answers[field.id][row] = chip.dataset.level;
-            renderStep(step);
+            renderStep(step, false);
             saveDraft();
             var justTappedChip = stage.querySelector('.qz-chip[data-field-id="' + field.id + '"][data-row="' + chip.dataset.row + '"][data-level="' + chip.dataset.level + '"]');
             if (justTappedChip) {
@@ -727,9 +734,17 @@
         });
       }
     });
-    // Focus the first text field on the screen, if any, for fast keyboard entry.
-    var firstText = step.fields.filter(function (f) { return f.type === 'text'; })[0];
-    if (firstText) { var el = document.getElementById('f_' + firstText.id); if (el) setTimeout(function () { el.focus(); }, 50); }
+    // Focus the first text field on the screen, for fast keyboard entry —
+    // but only when actually navigating onto this screen. Doing this on
+    // every re-render (including the ones triggered by picking an option
+    // elsewhere on the same screen) was the bug: selecting, say, "year"
+    // at the bottom of a screen would silently steal focus back up to the
+    // "college name" field at the top, which looked like the form was
+    // randomly jumping backward.
+    if (isNav) {
+      var firstText = step.fields.filter(function (f) { return f.type === 'text'; })[0];
+      if (firstText) { var el = document.getElementById('f_' + firstText.id); if (el) setTimeout(function () { el.focus(); }, 50); }
+    }
   }
 
   function hideFieldErr(fieldId) {
