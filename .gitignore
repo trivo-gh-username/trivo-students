@@ -1,6 +1,11 @@
 # Dependencies
 node_modules
 
+# Generated at build time by `npm run build:css` (see package.json) /
+# during the Docker image build — never hand-edit or commit this, the
+# source of truth is css/tailwind.src.css.
+css/tailwind.css
+
 # Local secrets — never commit these
 .env
 .env.*

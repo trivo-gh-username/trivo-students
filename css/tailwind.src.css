@@ -1,0 +1,25 @@
+/* Compiled with the Tailwind CLI (not the Play CDN) — see package.json's
+   build:css / dev:css scripts. Only the theme + utilities layers are
+   imported (not tailwindcss/preflight.css), so this can never reset or
+   override the hand-tuned base styles in css/app.css / this file's own
+   <style> blocks — same intent as v3's corePlugins.preflight:false. */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@source "../*.html";
+@source "../admin/*.html";
+
+@theme {
+  --color-bg: #0a0a0f;
+  --color-bg-card: #15151f;
+  --color-bg-raised: #111118;
+  --color-line: #26262f;
+  --color-line-strong: #34343f;
+  --color-fg: #f5f5f7;
+  --color-fg-muted: #a8a8b8;
+  --color-fg-subtle: #6f6f80;
+  --color-accent: #7c5cff;
+  --color-accent-2: #40e0d0;
+  --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+}
