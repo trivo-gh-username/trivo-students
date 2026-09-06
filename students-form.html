@@ -179,7 +179,14 @@
   .qz-chip.is-selected { border-color: var(--accent-2); background: var(--accent-soft); color: var(--fg); }
   .qz-grid-progress { font-size: var(--t-xs); color: var(--fg-subtle); margin-bottom: var(--s-5); }
 
-  /* ── Sticky bottom action bar — solid, bordered, Continue centered ── */
+  /* ── Bottom action bar — solid, bordered, Continue centered ─────────
+        Desktop/tablet: side by side, Back pinned to the corner.
+        Mobile: stacked vertically (Continue on top, Back below with a
+        gap), and pinned with `position: fixed` rather than `sticky` —
+        `sticky` inside a flex column can be unreliable on mobile
+        browsers (notably combined with `backdrop-filter`), so on small
+        screens this is pinned outright and the content column gets
+        enough bottom padding to never sit underneath it. ── */
   .qz-actions {
     position: sticky; bottom: 0; z-index: 38;
     background: rgba(10,10,15,0.92); backdrop-filter: blur(10px);
@@ -193,6 +200,7 @@
     color: var(--fg-muted); border-radius: var(--r-pill); padding: 0.7rem 1rem;
     font-family: var(--font-display); font-weight: 600; font-size: var(--t-sm); cursor: pointer;
   }
+  .qz-btn-back.qz-back-hidden { display: none; }
   .qz-btn-next {
     width: 100%; max-width: 320px; border: none; border-radius: var(--r-pill); padding: 0.9rem 1.5rem;
     font-family: var(--font-display); font-weight: 600; font-size: var(--t-sm); cursor: pointer;
@@ -203,6 +211,23 @@
   }
   .qz-btn-next:not(:disabled):active { transform: scale(0.99); }
   .qz-btn-next:disabled { opacity: 0.6; cursor: wait; }
+
+  @media (max-width: 640px) {
+    .qz-actions {
+      position: fixed; left: 0; right: 0; bottom: 0;
+    }
+    .qz-actions-row {
+      flex-direction: column; gap: var(--s-3); min-height: auto;
+    }
+    .qz-btn-next { order: 1; max-width: 100%; }
+    .qz-btn-back {
+      order: 2; position: static; transform: none;
+      width: 100%; max-width: 100%;
+    }
+    /* Room for the now-two-row fixed bar so the last field on a screen
+       never ends up hidden behind it. */
+    .qz-stage-wrap { padding-bottom: 11rem; }
+  }
 
   /* ── Toasts: milestone nudges + resume banner + save-disclaimer ── */
   .qz-toast-wrap {
@@ -563,7 +588,7 @@
     html += '</div>';
     stage.innerHTML = html;
     wireStep(step, isNav);
-    backBtn.style.visibility = stepIndex === 0 ? 'hidden' : 'visible';
+    backBtn.classList.toggle('qz-back-hidden', stepIndex === 0);
     updateNextLabel(step);
   }
 
@@ -838,7 +863,7 @@
     isSubmitting = true;
     nextBtn.disabled = true;
     nextBtn.innerHTML = '<span class="qz-spinner" aria-hidden="true"></span> Sending\u2026';
-    backBtn.style.visibility = 'hidden';
+    backBtn.classList.add('qz-back-hidden');
 
     var payload = buildPayload();
     var controller = ('AbortController' in window) ? new AbortController() : null;
@@ -871,7 +896,7 @@
       localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
     } catch (e) {}
 
-    backBtn.style.visibility = 'visible';
+    backBtn.classList.remove('qz-back-hidden');
     nextBtn.disabled = false;
     nextBtn.innerHTML = 'Try again <span aria-hidden="true">\u2192</span>';
 
