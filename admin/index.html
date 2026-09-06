@@ -5,7 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Admin — Trivo Student Programs</title>
 <meta name="robots" content="noindex, nofollow" />
+<!-- Tailwind (Play CDN) — same setup as the rest of the site; deferred
+     and guarded so it can never block or break this page if the CDN is
+     unreachable, and preflight is off so it can't touch the styles
+     below. -->
+<script src="https://cdn.tailwindcss.com" defer></script>
+<script>
+  window.addEventListener('DOMContentLoaded', function () {
+    if (!window.tailwind) return;
+    tailwind.config = { corePlugins: { preflight: false } };
+  });
+</script>
 <style>
+
   :root {
     --bg: #0a0a0f; --bg-card: #15151f; --line: #26262f; --line-strong: #34343f;
     --fg: #f5f5f7; --fg-muted: #a8a8b8; --accent: #7c5cff; --accent-fg: #fff;

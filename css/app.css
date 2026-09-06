@@ -147,7 +147,7 @@ h1, h2, h3, h4 {
   color: #fff;
   box-shadow: 0 8px 24px -8px rgba(124, 92, 255, 0.6);
 }
-.btn--primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px -8px rgba(124, 92, 255, 0.75); }
+.btn--primary:hover { transform: translateY(-1px); box-shadow: 0 10px 26px -8px rgba(124, 92, 255, 0.65); }
 .btn--ghost { background: transparent; border-color: var(--line-strong); color: var(--fg); }
 .btn--ghost:hover { border-color: var(--fg-muted); }
 .btn--sm { padding: 0.6rem 1.1rem; font-size: var(--t-xs); }
@@ -246,7 +246,7 @@ h1, h2, h3, h4 {
   padding: var(--s-6); display: flex; flex-direction: column; gap: var(--s-4);
   transition: transform 0.25s var(--ease), border-color 0.25s var(--ease), background 0.25s var(--ease);
 }
-.course-card:hover { transform: translateY(-4px); border-color: var(--accent); background: var(--bg-card-hover); }
+.course-card:hover { transform: translateY(-2px); border-color: var(--accent); background: var(--bg-card-hover); }
 .course-card__label { font-size: var(--t-xs); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent-2); }
 .course-card__title { font-family: var(--font-display); font-size: var(--t-lg); }
 .course-card__meta { font-size: var(--t-xs); color: var(--fg-subtle); display: flex; gap: var(--s-2); }
@@ -274,7 +274,7 @@ h1, h2, h3, h4 {
   border: 1px solid var(--line); border-radius: var(--r-lg);
   padding: var(--s-8) var(--s-5);
 }
-.closing-card__title { font-size: clamp(1.75rem, 5vw, var(--t-2xl)); max-width: 20ch; margin-inline: auto var(--s-6); }
+.closing-card__title { font-size: clamp(1.75rem, 5vw, var(--t-2xl)); max-width: 20ch; margin-inline: auto; margin-bottom: var(--s-6); }
 
 /* ── Footer ──────────────────────────────────────────────────────────── */
 .footer { border-top: 1px solid var(--line); padding: var(--s-7) 0; position: relative; z-index: 1; }
@@ -290,11 +290,11 @@ h1, h2, h3, h4 {
 }
 .floating-cta.is-visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
 .floating-cta__btn {
-  animation: breathe 2.6s ease-in-out infinite;
+  animation: breathe 3.4s ease-in-out infinite;
 }
 @keyframes breathe {
-  0%, 100% { box-shadow: 0 8px 24px -8px rgba(124, 92, 255, 0.6); }
-  50% { box-shadow: 0 8px 36px -4px rgba(124, 92, 255, 0.9); }
+  0%, 100% { box-shadow: 0 8px 24px -8px rgba(124, 92, 255, 0.55); }
+  50% { box-shadow: 0 8px 28px -6px rgba(124, 92, 255, 0.72); }
 }
 @media (prefers-reduced-motion: reduce) {
   .floating-cta__btn { animation: none; }
@@ -302,7 +302,7 @@ h1, h2, h3, h4 {
 }
 
 /* ── Scroll-reveal ───────────────────────────────────────────────────── */
-[data-reveal] { opacity: 0; transform: translateY(20px); transition: opacity 0.6s var(--ease), transform 0.6s var(--ease); }
+[data-reveal] { opacity: 0; transform: translateY(12px); transition: opacity 0.45s var(--ease), transform 0.45s var(--ease); }
 [data-reveal].is-visible { opacity: 1; transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) {
   [data-reveal] { opacity: 1; transform: none; transition: none; }

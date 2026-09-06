@@ -9,6 +9,39 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/app.css" />
+<!-- Tailwind (Play CDN, no build step — matches this project's
+     zero-framework approach). Preflight is disabled so Tailwind's base
+     reset can't silently override the site's existing hand-tuned CSS;
+     utility classes are still fully available. Brand colors are mapped
+     to the same tokens as css/app.css so `bg-accent`, `text-accent-2`
+     etc. stay in sync with the rest of the site. -->
+<script src="https://cdn.tailwindcss.com" defer></script>
+<script>
+  // Deferred, and guarded: if the CDN is slow/blocked/offline, the rest of
+  // the page (and the questionnaire's own JS) must still work — this
+  // should enhance the page, never be a dependency it can't function
+  // without.
+  window.addEventListener('DOMContentLoaded', function () {
+    if (!window.tailwind) return;
+    tailwind.config = {
+      corePlugins: { preflight: false },
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0a0a0f', 'bg-card': '#15151f', 'bg-raised': '#111118',
+            line: '#26262f', 'line-strong': '#34343f',
+            fg: '#f5f5f7', 'fg-muted': '#a8a8b8', 'fg-subtle': '#6f6f80',
+            accent: '#7c5cff', 'accent-2': '#40e0d0'
+          },
+          fontFamily: {
+            display: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
+            body: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
+          }
+        }
+      }
+    };
+  });
+</script>
 <style>
   /* ============================================================
      Questionnaire-specific styling. Built on top of the shared
@@ -35,8 +68,8 @@
      on the page, deliberately subtle. */
   .qz-progress-fill::after {
     content: ''; position: absolute; inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
-    width: 40%; animation: qzShimmer 2.2s ease-in-out infinite;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    width: 35%; animation: qzShimmer 2.6s ease-in-out infinite;
   }
   @keyframes qzShimmer { 0% { transform: translateX(-120%); } 100% { transform: translateX(340%); } }
   @media (prefers-reduced-motion: reduce) { .qz-progress-fill::after { animation: none; } }
@@ -58,10 +91,10 @@
 
   /* Directional step transitions: forward feels like moving on, back
      feels like rewinding — a small but real signal of navigation. */
-  .qz-step-in-fwd { animation: qzInFwd 0.34s var(--ease) both; }
-  .qz-step-in-back { animation: qzInBack 0.34s var(--ease) both; }
-  @keyframes qzInFwd { from { opacity: 0; transform: translate(18px, 6px); } to { opacity: 1; transform: translate(0,0); } }
-  @keyframes qzInBack { from { opacity: 0; transform: translate(-18px, 6px); } to { opacity: 1; transform: translate(0,0); } }
+  .qz-step-in-fwd { animation: qzInFwd 0.24s ease-out both; }
+  .qz-step-in-back { animation: qzInBack 0.24s ease-out both; }
+  @keyframes qzInFwd { from { opacity: 0; transform: translate(8px, 3px); } to { opacity: 1; transform: translate(0,0); } }
+  @keyframes qzInBack { from { opacity: 0; transform: translate(-8px, 3px); } to { opacity: 1; transform: translate(0,0); } }
   @media (prefers-reduced-motion: reduce) { .qz-step-in-fwd, .qz-step-in-back { animation: none; } }
 
   .qz-eyebrow {
@@ -115,7 +148,7 @@
   }
   .qz-option:hover { border-color: var(--accent-2); }
   .qz-option:active { transform: scale(0.99); }
-  .qz-option.is-selected { border-color: var(--accent-2); background: var(--accent-soft); animation: qzPop 0.22s var(--ease); }
+  .qz-option.is-selected { border-color: var(--accent-2); background: var(--accent-soft); }
   .qz-option__mark {
     flex: none; width: 20px; height: 20px; border-radius: 50%;
     border: 1.5px solid var(--line-strong); position: relative;
@@ -126,8 +159,15 @@
   }
   .qz-options[data-shape="square"] .qz-option__mark { border-radius: 6px; }
   .qz-options[data-shape="square"] .qz-option.is-selected .qz-option__mark::after { border-radius: 2px; }
-  @keyframes qzPop { 0% { transform: scale(1); } 45% { transform: scale(1.025); } 100% { transform: scale(1); } }
-  @media (prefers-reduced-motion: reduce) { .qz-option.is-selected { animation: none; } }
+  /* Applied transiently, via JS, ONLY to the exact pill/chip the user just
+     tapped — not to every already-selected element. Re-rendering a whole
+     screen on every tap (needed to keep things simple/correct) used to
+     mean every previously-picked option replayed this animation at once
+     whenever you picked something new, which read as a chaotic jitter
+     across the screen instead of one small, satisfying tap response. */
+  .qz-just-picked { animation: qzPop 0.16s ease-out; }
+  @keyframes qzPop { 0% { transform: scale(1); } 50% { transform: scale(1.015); } 100% { transform: scale(1); } }
+  @media (prefers-reduced-motion: reduce) { .qz-just-picked { animation: none; } }
 
   .qz-inline-note { font-size: var(--t-xs); color: var(--fg-subtle); margin-top: var(--s-4); }
 
@@ -150,8 +190,7 @@
     color: var(--fg-muted); font-size: 0.8rem; font-family: var(--font-body);
     cursor: pointer; white-space: nowrap; transition: border-color 0.15s, background 0.15s, color 0.15s;
   }
-  .qz-chip.is-selected { border-color: var(--accent-2); background: var(--accent-soft); color: var(--fg); animation: qzPop 0.2s var(--ease); }
-  @media (prefers-reduced-motion: reduce) { .qz-chip.is-selected { animation: none; } }
+  .qz-chip.is-selected { border-color: var(--accent-2); background: var(--accent-soft); color: var(--fg); }
   .qz-grid-progress { font-size: var(--t-xs); color: var(--fg-subtle); margin-bottom: var(--s-5); }
 
   /* ── Sticky bottom action bar ───────────────────────────────── */
@@ -180,25 +219,18 @@
   .qz-btn-next:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
   .qz-btn-next:not(:disabled):active { transform: scale(0.99); }
 
-  /* ── Toasts: milestone nudges + resume banner ──────────────── */
+  /* Toasts + resume banner are styled with Tailwind utility classes
+     directly in their markup (see JS below) rather than here — kept as
+     the one deliberately-Tailwind-first part of this page. Only the
+     bits Tailwind can't express (the slide/fade transition and its
+     "show" state) stay as real CSS. */
   .qz-toast-wrap {
-    position: fixed; left: 0; right: 0; bottom: calc(var(--s-8) + env(safe-area-inset-bottom));
-    z-index: 45; display: flex; justify-content: center; padding-inline: var(--s-5);
+    position: fixed; left: 0; right: 0; bottom: calc(4.5rem + env(safe-area-inset-bottom));
+    z-index: 45; display: flex; justify-content: center; padding-inline: 1.5rem;
     pointer-events: none;
   }
-  .qz-toast {
-    pointer-events: auto;
-    max-width: 480px; width: 100%;
-    background: var(--bg-raised); border: 1px solid var(--accent-2);
-    color: var(--fg); font-size: var(--t-xs);
-    padding: var(--s-3) var(--s-4); border-radius: var(--r-md);
-    box-shadow: 0 12px 28px -10px rgba(0,0,0,0.5);
-    display: flex; align-items: center; justify-content: space-between; gap: var(--s-4);
-    transform: translateY(140%); opacity: 0;
-    transition: transform 0.35s var(--ease), opacity 0.35s var(--ease);
-  }
+  .qz-toast { transform: translateY(140%); opacity: 0; transition: transform 0.35s var(--ease), opacity 0.35s var(--ease); }
   .qz-toast.show { transform: translateY(0); opacity: 1; }
-  .qz-toast button { background: none; border: none; color: var(--accent-2); font-family: var(--font-body); font-weight: 600; font-size: var(--t-xs); cursor: pointer; white-space: nowrap; }
 
   /* ── Intro / outro full screens ─────────────────────────────── */
   .qz-splash { text-align: center; padding: var(--s-6) 0; }
@@ -257,13 +289,6 @@
     .qz-checkmark circle, .qz-checkmark path { animation: none; stroke-dashoffset: 0; }
   }
 
-  .qz-resume-banner {
-    max-width: 640px; margin: var(--s-5) auto 0; padding: var(--s-3) var(--s-5);
-    background: var(--accent-soft); border: 1px solid var(--accent);
-    border-radius: var(--r-md); font-size: var(--t-xs); color: var(--fg-muted);
-    display: flex; align-items: center; justify-content: space-between; gap: var(--s-4);
-  }
-  .qz-resume-banner button { background: none; border: none; color: var(--accent-2); font-weight: 600; font-family: var(--font-body); font-size: var(--t-xs); cursor: pointer; }
 
   .qz-alert {
     display: none; text-align: left; background: rgba(251,191,36,0.1);
@@ -502,8 +527,8 @@
 
   function showToast(message, actionLabel, actionFn, duration) {
     var el = document.createElement('div');
-    el.className = 'qz-toast';
-    el.innerHTML = '<span>' + esc(message) + '</span>' + (actionLabel ? '<button type="button">' + esc(actionLabel) + '</button>' : '');
+    el.className = 'qz-toast pointer-events-auto max-w-[480px] w-full bg-bg-raised border border-accent-2 text-fg text-xs px-4 py-3 rounded-xl shadow-[0_12px_28px_-10px_rgba(0,0,0,0.5)] flex items-center justify-between gap-4';
+    el.innerHTML = '<span>' + esc(message) + '</span>' + (actionLabel ? '<button type="button" class="bg-transparent border-0 text-accent-2 font-semibold text-xs cursor-pointer whitespace-nowrap">' + esc(actionLabel) + '</button>' : '');
     toastWrap.innerHTML = '';
     toastWrap.appendChild(el);
     if (actionLabel && actionFn) el.querySelector('button').addEventListener('click', function () { actionFn(); dismiss(); });
@@ -520,9 +545,9 @@
   function renderResumeBanner() {
     if (!resumedFromDraft || stepIndex < 0) { resumeSlot.innerHTML = ''; return; }
     resumeSlot.innerHTML =
-      '<div class="qz-resume-banner">' +
+      '<div class="qz-resume-banner max-w-[640px] mx-auto mt-5 px-5 py-3 bg-accent/[0.14] border border-accent rounded-xl text-xs text-fg-muted flex items-center justify-between gap-4">' +
         '<span>Welcome back \u2014 resuming where you left off.</span>' +
-        '<button type="button" id="qzStartOver">Start over</button>' +
+        '<button type="button" id="qzStartOver" class="bg-transparent border-0 text-accent-2 font-semibold text-xs cursor-pointer">Start over</button>' +
       '</div>';
     document.getElementById('qzStartOver').addEventListener('click', function () {
       if (!confirm('Clear your saved answers and start from question 1?')) return;
@@ -661,6 +686,15 @@
             }
             renderStep(step); // re-render this screen to reflect the new selection state
             saveDraft();
+            // Animate ONLY the pill that was just tapped, not every already
+            // -selected pill on the screen (that was the "weird" jittery
+            // animation — a full re-render used to replay the pop on all
+            // of them at once).
+            var justTapped = stage.querySelector('.qz-option[data-field-id="' + field.id + '"][data-opt-index="' + btn.dataset.optIndex + '"]');
+            if (justTapped) {
+              justTapped.classList.add('qz-just-picked');
+              setTimeout(function () { justTapped.classList.remove('qz-just-picked'); }, 200);
+            }
             if (field.other && opt === 'Other') {
               var freshOtherInput = document.getElementById('otherInput_' + field.id);
               if (freshOtherInput) setTimeout(function () { freshOtherInput.focus(); }, 60);
@@ -684,6 +718,11 @@
             answers[field.id][row] = chip.dataset.level;
             renderStep(step);
             saveDraft();
+            var justTappedChip = stage.querySelector('.qz-chip[data-field-id="' + field.id + '"][data-row="' + chip.dataset.row + '"][data-level="' + chip.dataset.level + '"]');
+            if (justTappedChip) {
+              justTappedChip.classList.add('qz-just-picked');
+              setTimeout(function () { justTappedChip.classList.remove('qz-just-picked'); }, 200);
+            }
           });
         });
       }
