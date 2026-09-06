@@ -44,6 +44,63 @@
   #toast.show { opacity: 1; }
   .rows { display: grid; gap: 0.5rem; }
   .item-list-row { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; align-items: start; border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.75rem; }
+
+  /* ── Courses / Paths / Tags editors ─────────────────────────────── */
+  .field-vis-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+  .field-vis-toggle { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--fg-muted); background: var(--bg); border: 1px solid var(--line-strong); border-radius: 999px; padding: 0.35rem 0.75rem 0.35rem 0.5rem; cursor: pointer; user-select: none; }
+  .field-vis-toggle input { width: auto; margin: 0; }
+  .field-vis-toggle.is-off { opacity: 0.55; text-decoration: line-through; }
+
+  .offer-item-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 0.875rem; padding: 1.25rem; margin-top: 1rem; }
+  .offer-item-card__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
+  .offer-item-card__title { font-weight: 700; font-size: 1rem; }
+  .offer-item-card.is-hidden { opacity: 0.6; border-style: dashed; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+  @media (max-width: 640px) { .field-grid { grid-template-columns: 1fr; } }
+  .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; background: var(--bg); border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.6rem 0.85rem; margin-bottom: 1rem; }
+  .switch-row label { margin: 0; font-size: 0.85rem; color: var(--fg); font-weight: 500; }
+  .switch-row input { width: auto; margin: 0; }
+
+  .tier-row { display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+  .tier-row input { margin-bottom: 0; }
+  @media (max-width: 640px) { .tier-row { grid-template-columns: 1fr 1fr; } }
+
+  .breakdown-row { display: grid; grid-template-columns: 1fr auto auto; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+  .breakdown-row input { margin-bottom: 0; }
+
+  .tag-input-wrap { position: relative; }
+  .tag-chips-editable { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem; }
+  .tag-chip-editable { display: inline-flex; align-items: center; gap: 0.35rem; background: var(--accent); color: #fff; font-size: 0.78rem; padding: 0.25rem 0.4rem 0.25rem 0.65rem; border-radius: 999px; }
+  .tag-chip-editable button { background: none; border: none; color: #fff; opacity: 0.75; cursor: pointer; padding: 0; font-size: 0.9rem; line-height: 1; }
+  .tag-suggestions { position: absolute; z-index: 5; top: calc(100% - 0.5rem); left: 0; right: 0; background: var(--bg-card); border: 1px solid var(--line-strong); border-radius: 0.5rem; max-height: 180px; overflow-y: auto; display: none; }
+  .tag-suggestions.show { display: block; }
+  .tag-suggestion { padding: 0.5rem 0.75rem; font-size: 0.85rem; cursor: pointer; }
+  .tag-suggestion:hover, .tag-suggestion.is-active { background: var(--line); }
+
+  .course-picker { display: grid; gap: 0.4rem; max-height: 220px; overflow-y: auto; border: 1px solid var(--line); border-radius: 0.5rem; padding: 0.6rem; margin-bottom: 1rem; }
+  .course-picker label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--fg); font-weight: 400; margin: 0; }
+  .course-picker input { width: auto; margin: 0; }
+  .course-picker .is-hidden-course { color: var(--fg-muted); }
+  .missing-ref-warning { color: var(--err); font-size: 0.75rem; margin-top: 0.5rem; }
+
+  .tags-registry-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--line); }
+  .tags-registry-row input { margin: 0; flex: 1; }
+  .tags-registry-row .tag-usage-count { font-size: 0.75rem; color: var(--fg-muted); white-space: nowrap; }
+
+  .ie-panel { background: var(--bg-card); border: 1px solid var(--line); border-radius: 0.875rem; padding: 1.25rem; margin-top: 1.5rem; }
+  .ie-panel__grid { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end; margin-top: 1rem; }
+  .ie-panel__checks { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .ie-panel__checks label { display: flex; align-items: center; gap: 0.4rem; margin: 0; font-size: 0.85rem; color: var(--fg); font-weight: 500; }
+  .ie-panel__checks input { width: auto; margin: 0; }
+  .ie-samples { margin-top: 0.75rem; font-size: 0.8rem; }
+  .ie-samples a { color: var(--accent); text-decoration: none; margin-right: 1rem; }
+  .ie-samples a:hover { text-decoration: underline; }
+  .ie-diff { background: var(--bg); border: 1px solid var(--line); border-radius: 0.5rem; padding: 1rem; margin-top: 1rem; font-size: 0.85rem; }
+  .ie-diff h4 { margin: 0 0 0.4rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--fg-muted); }
+  .ie-diff ul { margin: 0 0 0.75rem; padding-left: 1.1rem; }
+  .ie-diff li.add { color: var(--success); }
+  .ie-diff li.remove { color: var(--err); }
+  .ie-diff li.keep { color: var(--fg-muted); }
 </style>
 </head>
 <body>
@@ -70,6 +127,9 @@
 
   <div class="tabs">
     <button class="tab active" data-panel="content">Site content</button>
+    <button class="tab" data-panel="courses">Courses</button>
+    <button class="tab" data-panel="paths">Paths</button>
+    <button class="tab" data-panel="tags">Tags</button>
     <button class="tab" data-panel="registrations">Registrations</button>
     <button class="tab" data-panel="funnel">Funnel</button>
   </div>
@@ -90,13 +150,6 @@
       <p class="muted">Four stat callouts on the landing page. One per row: <code>value | label</code>.</p>
       <textarea id="c-stats" rows="5" placeholder="70% | of new job postings now mention AI tools"></textarea>
       <button class="primary" id="btnSaveStats">Save stats</button>
-    </div>
-
-    <div class="card">
-      <h3 style="margin-top:0;">Courses</h3>
-      <p class="muted">One per line: <code>Name | Label | Duration | Hours | Description</code></p>
-      <textarea id="c-courses" rows="8"></textarea>
-      <button class="primary" id="btnSaveCourses">Save courses</button>
     </div>
 
     <div class="card">
@@ -123,6 +176,69 @@
       <button class="primary" id="btnSaveRaw">Save raw JSON</button>
     </div>
   </div>
+
+  <!-- ═══ Courses ═══════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-courses">
+    <div class="card">
+      <div class="row" style="justify-content: space-between; align-items:flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <strong>Field visibility</strong>
+          <p class="muted" style="margin: 0.25rem 0 0;">Turn a field off here and it disappears from every course, everywhere on the site — the data stays saved, so turning it back on restores it instantly.</p>
+        </div>
+        <button id="btnCoursesToggleAllFields">Toggle all</button>
+      </div>
+      <div class="field-vis-row" id="coursesFieldVis"></div>
+      <div class="row" style="margin-top: 1rem; gap: 0.6rem; flex-wrap: wrap;">
+        <button id="btnCoursesAllContact">Set all courses to "Contact for pricing"</button>
+        <button id="btnCoursesAllPricesVisible">Show real prices on all courses</button>
+      </div>
+    </div>
+
+    <div id="coursesList"></div>
+    <button class="primary" id="btnAddCourse">+ Add course</button>
+
+    <div id="ieCourses"></div>
+  </div>
+
+  <!-- ═══ Paths ═════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-paths">
+    <div class="card">
+      <div class="row" style="justify-content: space-between; align-items:flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <strong>Field visibility</strong>
+          <p class="muted" style="margin: 0.25rem 0 0;">Same idea as Courses — hides the field from every Path on the site without losing the data.</p>
+        </div>
+        <button id="btnPathsToggleAllFields">Toggle all</button>
+      </div>
+      <div class="field-vis-row" id="pathsFieldVis"></div>
+      <div class="row" style="margin-top: 1rem; gap: 0.6rem; flex-wrap: wrap;">
+        <button id="btnPathsAllContact">Set all paths to "Contact for pricing"</button>
+        <button id="btnPathsAllPricesVisible">Show real prices on all paths</button>
+      </div>
+    </div>
+
+    <p class="muted" style="margin: 0 0 1rem;">A Path can include courses that aren't listed anywhere on their own — pick from every course, including hidden ones, below.</p>
+    <div id="pathsList"></div>
+    <button class="primary" id="btnAddPath">+ Add path</button>
+
+    <div id="iePaths"></div>
+  </div>
+
+  <!-- ═══ Tags ══════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-tags">
+    <div class="card">
+      <strong>Tags</strong>
+      <p class="muted" style="margin: 0.25rem 0 1rem;">The shared list used for autocomplete when tagging a course or path, and to power the tag filter on the courses page. A tag can't be deleted while it's still attached to something — you'll see exactly what's using it.</p>
+      <div class="row" style="gap: 0.5rem; margin-bottom: 1rem;">
+        <input id="newTagInput" placeholder="New tag name" style="margin:0;" />
+        <button class="primary" id="btnAddTag">Add tag</button>
+      </div>
+      <div id="tagsList"></div>
+    </div>
+
+    <div id="ieTags"></div>
+  </div>
+
 
   <div class="panel" id="panel-registrations">
     <div id="regsInsights" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
@@ -273,6 +389,9 @@
       document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
       if (tab.dataset.panel === 'registrations') loadRegistrations();
       if (tab.dataset.panel === 'funnel') loadFunnel();
+      if (tab.dataset.panel === 'courses') renderCoursesTab();
+      if (tab.dataset.panel === 'paths') renderPathsTab();
+      if (tab.dataset.panel === 'tags') renderTagsTab();
     });
   });
 
@@ -288,11 +407,6 @@
       var stats = (content.gapStats && content.gapStats.items) || [];
       document.getElementById('c-stats').value = stats.map(function (s) { return s.value + ' | ' + s.label; }).join('\n');
 
-      var courses = (content.courses && content.courses.items) || [];
-      document.getElementById('c-courses').value = courses.map(function (c) {
-        return [c.name, c.label, c.duration, c.hours, c.description].join(' | ');
-      }).join('\n');
-
       var faq = (content.faq && content.faq.items) || [];
       document.getElementById('c-faq').value = faq.map(function (f) { return f.question + ' | ' + f.answer; }).join('\n');
 
@@ -303,7 +417,25 @@
       }).join('\n');
 
       document.getElementById('c-raw').value = JSON.stringify(content, null, 2);
+      ensureCollectionsShape(content);
+      renderCoursesTab();
+      renderPathsTab();
+      renderTagsTab();
     });
+  }
+
+  // Older content documents (or a partial import) might not have these
+  // keys yet — give them a safe empty shape so every render function
+  // below can assume `content.courses.fieldVisibility` etc. always exist.
+  function ensureCollectionsShape(c) {
+    c.courses = c.courses || { visible: true, items: [] };
+    c.courses.items = c.courses.items || [];
+    c.courses.fieldVisibility = c.courses.fieldVisibility || { label: true, duration: true, hours: true, hoursBreakdown: true, tags: true, description: true, price: true };
+    c.paths = c.paths || { visible: true, items: [] };
+    c.paths.items = c.paths.items || [];
+    c.paths.fieldVisibility = c.paths.fieldVisibility || { label: true, duration: true, hours: true, hoursBreakdown: true, tags: true, description: true, price: true };
+    c.tags = c.tags || { items: [] };
+    c.tags.items = c.tags.items || [];
   }
 
   function save(patchFn, label) {
@@ -330,20 +462,6 @@
         return { id: 's' + (i + 1), value: parts[0] || '', label: parts[1] || '' };
       });
     }, 'Stats');
-  });
-
-  document.getElementById('btnSaveCourses').addEventListener('click', function () {
-    save(function (c) {
-      c.courses = c.courses || { visible: true };
-      c.courses.items = document.getElementById('c-courses').value.split('\n').filter(Boolean).map(function (line, i) {
-        var parts = line.split('|').map(function (s) { return s.trim(); });
-        return {
-          id: 'c' + (i + 1), name: parts[0] || '', label: parts[1] || '',
-          duration: parts[2] || '', hours: parseInt(parts[3], 10) || 0,
-          description: parts[4] || '', tags: []
-        };
-      });
-    }, 'Courses');
   });
 
   document.getElementById('btnSaveFaq').addEventListener('click', function () {
@@ -694,6 +812,612 @@
     if (e.key !== 'Escape') return;
     closeDraftModal();
   });
+
+  // ══════════════════════════════════════════════════════════════════
+  // Courses / Paths — shared editor logic. A "collection" is either
+  // content.courses or content.paths; both have the exact same shape
+  // (fieldVisibility + items[]), so one set of functions handles both,
+  // parameterised by `kind` ('course' | 'path').
+  // ══════════════════════════════════════════════════════════════════
+  var FIELD_DEFS = [
+    ['label', 'Label'], ['duration', 'Duration'], ['hours', 'Hours'],
+    ['hoursBreakdown', 'Hours breakdown'], ['tags', 'Tags'],
+    ['description', 'Description'], ['price', 'Price']
+  ];
+
+  function collectionOf(kind) { return kind === 'course' ? content.courses : content.paths; }
+
+  function renderFieldVisRow(kind) {
+    var coll = collectionOf(kind);
+    var container = document.getElementById(kind === 'course' ? 'coursesFieldVis' : 'pathsFieldVis');
+    container.innerHTML = FIELD_DEFS.map(function (f) {
+      var on = coll.fieldVisibility[f[0]] !== false;
+      return '<label class="field-vis-toggle' + (on ? '' : ' is-off') + '" data-field="' + f[0] + '">' +
+        '<input type="checkbox" data-fv="' + f[0] + '"' + (on ? ' checked' : '') + ' /> ' + escapeHtml(f[1]) +
+      '</label>';
+    }).join('');
+    container.querySelectorAll('[data-fv]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        coll.fieldVisibility[cb.dataset.fv] = cb.checked;
+        api('POST', 'content', { content: content }).then(function () { toast('Field visibility updated'); });
+        cb.closest('.field-vis-toggle').classList.toggle('is-off', !cb.checked);
+      });
+    });
+  }
+
+  document.getElementById('btnCoursesToggleAllFields').addEventListener('click', function () { toggleAllFields('course'); });
+  document.getElementById('btnPathsToggleAllFields').addEventListener('click', function () { toggleAllFields('path'); });
+  function toggleAllFields(kind) {
+    var coll = collectionOf(kind);
+    var anyOn = FIELD_DEFS.some(function (f) { return coll.fieldVisibility[f[0]] !== false; });
+    FIELD_DEFS.forEach(function (f) { coll.fieldVisibility[f[0]] = !anyOn; });
+    persistCollection(kind, 'Field visibility');
+    renderFieldVisRow(kind);
+  }
+
+  document.getElementById('btnCoursesAllContact').addEventListener('click', function () { bulkPricing('course', true); });
+  document.getElementById('btnPathsAllContact').addEventListener('click', function () { bulkPricing('path', true); });
+  document.getElementById('btnCoursesAllPricesVisible').addEventListener('click', function () { bulkPricing('course', false); });
+  document.getElementById('btnPathsAllPricesVisible').addEventListener('click', function () { bulkPricing('path', false); });
+  function bulkPricing(kind, contactForPricing) {
+    var coll = collectionOf(kind);
+    if (!confirm('This sets EVERY ' + kind + ' to ' + (contactForPricing ? '"Contact for pricing"' : 'showing its real price') + '. Continue?')) return;
+    coll.items.forEach(function (item) { item.contactForPricing = contactForPricing; });
+    persistCollection(kind, 'Pricing');
+    (kind === 'course' ? renderCoursesTab : renderPathsTab)();
+  }
+
+  function persistCollection(kind, label) {
+    return api('POST', 'content', { content: content }).then(function () {
+      toast((label || (kind === 'course' ? 'Course' : 'Path')) + ' saved');
+    }).catch(function (err) { toast('Save failed: ' + err.message); });
+  }
+
+  function newId(prefix, items) {
+    var n = 1;
+    var existing = items.map(function (i) { return i.id; });
+    while (existing.indexOf(prefix + n) !== -1) n++;
+    return prefix + n;
+  }
+
+  function blankItem(kind) {
+    return {
+      id: newId(kind === 'course' ? 'c' : 'path', collectionOf(kind).items),
+      name: '', label: '', duration: '', durationWeeks: null, hours: null,
+      hoursBreakdown: [], description: '', tags: [],
+      multiTierPricing: false, prices: [{ id: 'p1', label: 'Standard', value: null, display: '' }],
+      contactForPricing: true, visible: true, showOnHomepage: false,
+      includesCourseIds: kind === 'path' ? [] : undefined
+    };
+  }
+
+  document.getElementById('btnAddCourse').addEventListener('click', function () {
+    content.courses.items.push(blankItem('course'));
+    persistCollection('course', 'Course added').then(renderCoursesTab);
+  });
+  document.getElementById('btnAddPath').addEventListener('click', function () {
+    content.paths.items.push(blankItem('path'));
+    persistCollection('path', 'Path added').then(renderPathsTab);
+  });
+
+  function renderCoursesTab() {
+    if (!content.courses) return;
+    renderFieldVisRow('course');
+    var list = document.getElementById('coursesList');
+    list.innerHTML = content.courses.items.map(function (item, i) { return renderItemCard('course', item, i); }).join('') ||
+      '<p class="muted">No courses yet.</p>';
+    content.courses.items.forEach(function (item, i) { wireItemCard('course', item, i); });
+    renderImportExport('courses');
+  }
+
+  function renderPathsTab() {
+    if (!content.paths) return;
+    renderFieldVisRow('path');
+    var list = document.getElementById('pathsList');
+    list.innerHTML = content.paths.items.map(function (item, i) { return renderItemCard('path', item, i); }).join('') ||
+      '<p class="muted">No paths yet.</p>';
+    content.paths.items.forEach(function (item, i) { wireItemCard('path', item, i); });
+    renderImportExport('paths');
+  }
+
+  function fid(kind, i, name) { return kind + '_' + i + '_' + name; }
+
+  function renderItemCard(kind, item, i) {
+    var priceRowsHtml = (item.prices || []).map(function (p, ti) {
+      return '<div class="tier-row" data-tier="' + ti + '">' +
+        (item.multiTierPricing ? '<input placeholder="Tier label (e.g. Early bird)" value="' + escapeHtml(p.label || '') + '" data-tier-field="label" />' : '<input type="hidden" value="' + escapeHtml(p.label || 'Standard') + '" data-tier-field="label" />') +
+        '<input type="number" placeholder="Value (\u20b9)" value="' + (p.value != null ? p.value : '') + '" data-tier-field="value" />' +
+        '<input placeholder="Display override (optional)" value="' + escapeHtml(p.display || '') + '" data-tier-field="display" />' +
+        (item.multiTierPricing ? '<button type="button" class="danger" data-remove-tier="' + ti + '">Remove</button>' : '<span></span>') +
+        '</div>';
+    }).join('');
+
+    var breakdownRowsHtml = (item.hoursBreakdown || []).map(function (b, bi) {
+      return '<div class="breakdown-row" data-bd="' + bi + '">' +
+        '<input placeholder="Label (e.g. Lectures)" value="' + escapeHtml(b.label || '') + '" data-bd-field="label" />' +
+        '<input type="number" placeholder="Hours" value="' + (b.hours != null ? b.hours : '') + '" data-bd-field="hours" style="width:6rem;" />' +
+        '<button type="button" class="danger" data-remove-bd="' + bi + '">Remove</button>' +
+        '</div>';
+    }).join('');
+
+    var tagChipsHtml = (item.tags || []).map(function (t) {
+      return '<span class="tag-chip-editable">' + escapeHtml(t) + '<button type="button" data-remove-tag="' + escapeHtml(t) + '">\u00d7</button></span>';
+    }).join('');
+
+    var coursePickerHtml = '';
+    if (kind === 'path') {
+      var missing = (item.includesCourseIds || []).filter(function (id) { return !content.courses.items.some(function (c) { return c.id === id; }); });
+      coursePickerHtml =
+        '<label>Included courses (can include hidden ones)</label>' +
+        '<div class="course-picker">' + content.courses.items.map(function (c) {
+          var checked = (item.includesCourseIds || []).indexOf(c.id) !== -1;
+          return '<label class="' + (c.visible === false ? 'is-hidden-course' : '') + '"><input type="checkbox" data-include-course="' + escapeHtml(c.id) + '"' + (checked ? ' checked' : '') + ' /> ' +
+            escapeHtml(c.name || '(unnamed course)') + (c.visible === false ? ' <span class="muted">(hidden)</span>' : '') + '</label>';
+        }).join('') + '</div>' +
+        (missing.length ? '<p class="missing-ref-warning">\u26a0 References ' + missing.length + ' course id(s) that no longer exist (' + missing.map(escapeHtml).join(', ') + ') — they\u2019ll be skipped automatically wherever this ' + kind + ' is shown. Uncheck nothing needed; this just won\u2019t render for those ids.</p>' : '');
+    }
+
+    return '<div class="offer-item-card' + (item.visible === false ? ' is-hidden' : '') + '" data-item="' + i + '">' +
+      '<div class="offer-item-card__head">' +
+        '<span class="offer-item-card__title">' + escapeHtml(item.name || '(untitled)') + (item.visible === false ? ' \u2014 hidden' : '') + '</span>' +
+        '<button type="button" class="danger" data-delete-item="' + i + '">Delete</button>' +
+      '</div>' +
+
+      '<div class="field-grid">' +
+        '<div><label>Name</label><input id="' + fid(kind, i, 'name') + '" value="' + escapeHtml(item.name || '') + '" /></div>' +
+        '<div><label>Label</label><input id="' + fid(kind, i, 'label') + '" value="' + escapeHtml(item.label || '') + '" placeholder="e.g. Starter, Advanced, Bundle" /></div>' +
+        '<div><label>Duration (display text)</label><input id="' + fid(kind, i, 'duration') + '" value="' + escapeHtml(item.duration || '') + '" placeholder="e.g. 6 weeks" /></div>' +
+        '<div><label>Duration (weeks, for filtering)</label><input type="number" id="' + fid(kind, i, 'durationWeeks') + '" value="' + (item.durationWeeks != null ? item.durationWeeks : '') + '" /></div>' +
+        '<div><label>Hours (total)</label><input type="number" id="' + fid(kind, i, 'hours') + '" value="' + (item.hours != null ? item.hours : '') + '" /></div>' +
+      '</div>' +
+
+      '<label>Hours breakdown</label>' + breakdownRowsHtml + '<button type="button" data-add-bd="1" style="margin-bottom:1rem;">+ Add breakdown row</button>' +
+
+      '<label>Description</label><textarea id="' + fid(kind, i, 'description') + '" rows="2">' + escapeHtml(item.description || '') + '</textarea>' +
+
+      '<label>Tags</label><div class="tag-chips-editable">' + tagChipsHtml + '</div>' +
+      '<div class="tag-input-wrap">' +
+        '<input placeholder="Type to search or create a tag, Enter to add" data-tag-input="1" />' +
+        '<div class="tag-suggestions" data-tag-suggestions="1"></div>' +
+      '</div>' +
+
+      '<div class="switch-row"><label>Multiple pricing tiers</label><input type="checkbox" data-multi-tier="1"' + (item.multiTierPricing ? ' checked' : '') + ' /></div>' +
+      '<label>Price' + (item.multiTierPricing ? ' tiers' : '') + '</label>' + priceRowsHtml +
+      (item.multiTierPricing ? '<button type="button" data-add-tier="1" style="margin-bottom:1rem;">+ Add tier</button>' : '') +
+      '<div class="switch-row"><label>Contact for pricing (hides the price, shows this instead)</label><input type="checkbox" data-contact="1"' + (item.contactForPricing ? ' checked' : '') + ' /></div>' +
+
+      coursePickerHtml +
+
+      '<div class="switch-row"><label>Visible (show as its own card anywhere)</label><input type="checkbox" data-visible="1"' + (item.visible !== false ? ' checked' : '') + ' /></div>' +
+      '<div class="switch-row"><label>Show on homepage teaser</label><input type="checkbox" data-homepage="1"' + (item.showOnHomepage ? ' checked' : '') + (item.visible === false ? ' disabled' : '') + ' /></div>' +
+
+      '<button class="primary" data-save-item="1">Save</button>' +
+      '</div>';
+  }
+
+  function wireItemCard(kind, item, i) {
+    var card = document.querySelector('.offer-item-card[data-item="' + i + '"]');
+    if (!card) return;
+    var coll = collectionOf(kind);
+
+    card.querySelector('[data-add-bd]').addEventListener('click', function () {
+      item.hoursBreakdown = item.hoursBreakdown || [];
+      item.hoursBreakdown.push({ label: '', hours: null });
+      rerenderOneCard(kind, i);
+    });
+    card.querySelectorAll('[data-remove-bd]').forEach(function (btn) {
+      btn.addEventListener('click', function () { item.hoursBreakdown.splice(Number(btn.dataset.removeBd), 1); rerenderOneCard(kind, i); });
+    });
+
+    var addTierBtn = card.querySelector('[data-add-tier]');
+    if (addTierBtn) addTierBtn.addEventListener('click', function () {
+      item.prices.push({ id: 'p' + (item.prices.length + 1), label: '', value: null, display: '' });
+      rerenderOneCard(kind, i);
+    });
+    card.querySelectorAll('[data-remove-tier]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (item.prices.length <= 1) { toast('Keep at least one price row — turn off "Multiple pricing tiers" instead.'); return; }
+        item.prices.splice(Number(btn.dataset.removeTier), 1); rerenderOneCard(kind, i);
+      });
+    });
+    card.querySelector('[data-multi-tier]').addEventListener('change', function (e) {
+      item.multiTierPricing = e.target.checked;
+      rerenderOneCard(kind, i);
+    });
+    card.querySelector('[data-contact]').addEventListener('change', function (e) { item.contactForPricing = e.target.checked; });
+
+    card.querySelectorAll('[data-remove-tag]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = item.tags.indexOf(btn.dataset.removeTag);
+        if (idx !== -1) item.tags.splice(idx, 1);
+        rerenderOneCard(kind, i);
+      });
+    });
+    wireTagInput(card.querySelector('[data-tag-input]'), card.querySelector('[data-tag-suggestions]'), function (tag) {
+      item.tags = item.tags || [];
+      if (item.tags.indexOf(tag) === -1) item.tags.push(tag);
+      if (content.tags.items.indexOf(tag) === -1) content.tags.items.push(tag); // "created on the spot"
+      rerenderOneCard(kind, i);
+    });
+
+    if (kind === 'path') {
+      card.querySelectorAll('[data-include-course]').forEach(function (cb) {
+        cb.addEventListener('change', function () {
+          item.includesCourseIds = item.includesCourseIds || [];
+          var id = cb.dataset.includeCourse;
+          var idx = item.includesCourseIds.indexOf(id);
+          if (cb.checked && idx === -1) item.includesCourseIds.push(id);
+          else if (!cb.checked && idx !== -1) item.includesCourseIds.splice(idx, 1);
+        });
+      });
+    }
+
+    card.querySelector('[data-visible="1"]').addEventListener('change', function (e) {
+      item.visible = e.target.checked;
+      var hpToggle = card.querySelector('[data-homepage]');
+      hpToggle.disabled = !e.target.checked;
+      if (!e.target.checked) { item.showOnHomepage = false; hpToggle.checked = false; }
+      card.classList.toggle('is-hidden', !e.target.checked);
+    });
+    card.querySelector('[data-homepage]').addEventListener('change', function (e) { item.showOnHomepage = e.target.checked; });
+
+    card.querySelector('[data-delete-item]').addEventListener('click', function () {
+      if (!confirm('Delete "' + (item.name || 'this ' + kind) + '" permanently? This can\u2019t be undone (consider turning off "Visible" instead if you just want to hide it).')) return;
+      coll.items.splice(i, 1);
+      persistCollection(kind, (kind === 'course' ? 'Course' : 'Path') + ' deleted').then(kind === 'course' ? renderCoursesTab : renderPathsTab);
+    });
+
+    card.querySelector('[data-save-item]').addEventListener('click', function () {
+      item.name = document.getElementById(fid(kind, i, 'name')).value;
+      item.label = document.getElementById(fid(kind, i, 'label')).value;
+      item.duration = document.getElementById(fid(kind, i, 'duration')).value;
+      item.durationWeeks = readNumberInput(fid(kind, i, 'durationWeeks'));
+      item.hours = readNumberInput(fid(kind, i, 'hours'));
+      item.description = document.getElementById(fid(kind, i, 'description')).value;
+      card.querySelectorAll('.breakdown-row').forEach(function (row, bi) {
+        item.hoursBreakdown[bi] = {
+          label: row.querySelector('[data-bd-field="label"]').value,
+          hours: Number(row.querySelector('[data-bd-field="hours"]').value) || 0
+        };
+      });
+      card.querySelectorAll('.tier-row').forEach(function (row, ti) {
+        item.prices[ti] = {
+          id: item.prices[ti] ? item.prices[ti].id : ('p' + (ti + 1)),
+          label: row.querySelector('[data-tier-field="label"]').value || 'Standard',
+          value: Number(row.querySelector('[data-tier-field="value"]').value) || null,
+          display: row.querySelector('[data-tier-field="display"]').value
+        };
+      });
+      persistCollection(kind, (kind === 'course' ? 'Course' : 'Path') + ' saved').then(function () {
+        (kind === 'course' ? renderCoursesTab : renderPathsTab)();
+      });
+    });
+  }
+
+  function readNumberInput(id) {
+    var v = document.getElementById(id).value;
+    return v === '' ? null : Number(v);
+  }
+
+  function rerenderOneCard(kind, i) {
+    var list = document.getElementById(kind === 'course' ? 'coursesList' : 'pathsList');
+    var item = collectionOf(kind).items[i];
+    var wrap = document.createElement('div');
+    wrap.innerHTML = renderItemCard(kind, item, i);
+    var newCard = wrap.firstElementChild;
+    var oldCard = list.querySelector('.offer-item-card[data-item="' + i + '"]');
+    list.replaceChild(newCard, oldCard);
+    wireItemCard(kind, item, i);
+  }
+
+  // Autocomplete: shows matching existing tags as you type; Enter (or
+  // clicking a suggestion) commits one. Typing something that doesn't
+  // match anything and pressing Enter creates it — added to the shared
+  // registry immediately so it's available for autocomplete elsewhere
+  // right away.
+  function wireTagInput(input, suggestBox, onCommit) {
+    input.addEventListener('input', function () {
+      var q = input.value.trim().toLowerCase();
+      if (!q) { suggestBox.classList.remove('show'); return; }
+      var matches = content.tags.items.filter(function (t) { return t.toLowerCase().indexOf(q) !== -1; }).slice(0, 8);
+      suggestBox.innerHTML = matches.map(function (t) { return '<div class="tag-suggestion" data-pick="' + escapeHtml(t) + '">' + escapeHtml(t) + '</div>'; }).join('');
+      suggestBox.classList.toggle('show', matches.length > 0);
+      suggestBox.querySelectorAll('[data-pick]').forEach(function (el) {
+        el.addEventListener('click', function () { onCommit(el.dataset.pick); input.value = ''; suggestBox.classList.remove('show'); });
+      });
+    });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        var v = input.value.trim().replace(/,$/, '');
+        if (v) { onCommit(v); input.value = ''; suggestBox.classList.remove('show'); }
+      }
+    });
+    input.addEventListener('blur', function () { setTimeout(function () { suggestBox.classList.remove('show'); }, 150); });
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // Tags registry
+  // ══════════════════════════════════════════════════════════════════
+  function tagUsage(tag) {
+    var courses = content.courses.items.filter(function (c) { return (c.tags || []).indexOf(tag) !== -1; });
+    var paths = content.paths.items.filter(function (p) { return (p.tags || []).indexOf(tag) !== -1; });
+    return { courses: courses, paths: paths, total: courses.length + paths.length };
+  }
+
+  function renderTagsTab() {
+    if (!content.tags) return;
+    var list = document.getElementById('tagsList');
+    list.innerHTML = content.tags.items.map(function (tag, i) {
+      var usage = tagUsage(tag);
+      return '<div class="tags-registry-row" data-tag-row="' + i + '">' +
+        '<input value="' + escapeHtml(tag) + '" data-rename-input="' + i + '" />' +
+        '<span class="tag-usage-count">' + usage.total + ' item' + (usage.total === 1 ? '' : 's') + '</span>' +
+        '<button data-rename-save="' + i + '">Rename</button>' +
+        '<button class="danger" data-delete-tag="' + i + '">Delete</button>' +
+      '</div>';
+    }).join('') || '<p class="muted">No tags yet — add one above, or create one on the spot from any course/path\u2019s tag field.</p>';
+
+    list.querySelectorAll('[data-rename-save]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = Number(btn.dataset.renameSave);
+        var oldTag = content.tags.items[i];
+        var newTag = list.querySelector('[data-rename-input="' + i + '"]').value.trim();
+        if (!newTag || newTag === oldTag) return;
+        if (content.tags.items.indexOf(newTag) !== -1) { toast('That tag already exists.'); return; }
+        content.tags.items[i] = newTag;
+        // Cascade: every course/path using the old name now uses the new one.
+        content.courses.items.forEach(function (c) { c.tags = (c.tags || []).map(function (t) { return t === oldTag ? newTag : t; }); });
+        content.paths.items.forEach(function (p) { p.tags = (p.tags || []).map(function (t) { return t === oldTag ? newTag : t; }); });
+        api('POST', 'content', { content: content }).then(function () { toast('Renamed \u201c' + oldTag + '\u201d \u2192 \u201c' + newTag + '\u201d everywhere'); renderTagsTab(); });
+      });
+    });
+    list.querySelectorAll('[data-delete-tag]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = Number(btn.dataset.deleteTag);
+        var tag = content.tags.items[i];
+        var usage = tagUsage(tag);
+        if (usage.total > 0) {
+          var names = usage.courses.concat(usage.paths).map(function (x) { return x.name || '(untitled)'; });
+          alert('Can\u2019t delete \u201c' + tag + '\u201d \u2014 it\u2019s still used on: ' + names.join(', ') + '.\n\nRemove it from those first (or rename it if you meant to fix a typo).');
+          return;
+        }
+        if (!confirm('Delete unused tag \u201c' + tag + '\u201d?')) return;
+        content.tags.items.splice(i, 1);
+        api('POST', 'content', { content: content }).then(function () { toast('Tag deleted'); renderTagsTab(); });
+      });
+    });
+    renderImportExport('tags');
+  }
+
+  document.getElementById('btnAddTag').addEventListener('click', function () {
+    var input = document.getElementById('newTagInput');
+    var v = input.value.trim();
+    if (!v) return;
+    if (content.tags.items.indexOf(v) !== -1) { toast('That tag already exists.'); return; }
+    content.tags.items.push(v);
+    input.value = '';
+    api('POST', 'content', { content: content }).then(function () { toast('Tag added'); renderTagsTab(); });
+  });
+
+  // ══════════════════════════════════════════════════════════════════
+  // Import / export — one shared panel, rendered identically into
+  // whichever of Courses/Paths/Tags is currently open. Export bundles
+  // exactly the checked collections into one file; import REPLACES those
+  // same collections after a preview showing exactly what will change
+  // (added / removed / kept, by name) and an explicit confirmation.
+  // ══════════════════════════════════════════════════════════════════
+  var EXPORT_TYPE = 'trivo-students-catalog-export';
+  var EXPORT_VERSION = 1;
+
+  function renderImportExport(defaultCollection) {
+    ['ieCourses', 'iePaths', 'ieTags'].forEach(function (containerId) {
+      var el = document.getElementById(containerId);
+      if (!el) return;
+      var isThisOne = (containerId === 'ie' + defaultCollection.charAt(0).toUpperCase() + defaultCollection.slice(1));
+      if (!isThisOne) { el.innerHTML = ''; return; }
+      el.innerHTML =
+        '<div class="ie-panel">' +
+          '<strong>Import / Export</strong>' +
+          '<p class="muted" style="margin:0.25rem 0 0;">Export any combination below as one JSON file. Importing REPLACES exactly the collections you check — you\u2019ll see precisely what changes before anything is saved.</p>' +
+          '<div class="ie-panel__grid">' +
+            '<div class="ie-panel__checks">' +
+              '<label><input type="checkbox" data-ie-check="courses" checked /> Courses</label>' +
+              '<label><input type="checkbox" data-ie-check="paths" checked /> Paths</label>' +
+              '<label><input type="checkbox" data-ie-check="tags" checked /> Tags</label>' +
+            '</div>' +
+            '<button class="primary" id="btnExportSelected_' + containerId + '">Export selected</button>' +
+            '<label style="margin:0;"><input type="file" accept=".json" id="importFile_' + containerId + '" style="width:auto; margin:0;" /></label>' +
+          '</div>' +
+          '<div class="ie-samples">Sample format: ' +
+            '<a href="#" data-sample="courses">Courses</a>' +
+            '<a href="#" data-sample="paths">Paths</a>' +
+            '<a href="#" data-sample="tags">Tags</a>' +
+            '<a href="#" data-sample="all">Courses + Paths + Tags</a>' +
+          '</div>' +
+          '<div id="ieDiff_' + containerId + '"></div>' +
+        '</div>';
+
+      var checks = function () {
+        var out = {};
+        el.querySelectorAll('[data-ie-check]').forEach(function (cb) { out[cb.dataset.ieCheck] = cb.checked; });
+        return out;
+      };
+
+      document.getElementById('btnExportSelected_' + containerId).addEventListener('click', function () {
+        var sel = checks();
+        if (!sel.courses && !sel.paths && !sel.tags) { toast('Pick at least one collection to export.'); return; }
+        downloadJson(buildExportPayload(sel), exportFilename(sel));
+      });
+
+      el.querySelectorAll('[data-sample]').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          downloadJson(buildSamplePayload(a.dataset.sample), 'trivo-catalog-sample-' + a.dataset.sample + '.json');
+        });
+      });
+
+      document.getElementById('importFile_' + containerId).addEventListener('change', function (e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function () {
+          var parsed;
+          try { parsed = JSON.parse(reader.result); } catch (err) { alert('That file isn\u2019t valid JSON.'); return; }
+          handleImportFile(parsed, containerId);
+        };
+        reader.readAsText(file);
+        e.target.value = ''; // allow re-selecting the same file later
+      });
+    });
+  }
+
+  function buildExportPayload(sel) {
+    var out = { _export: { type: EXPORT_TYPE, version: EXPORT_VERSION, generatedAt: new Date().toISOString(), includes: Object.keys(sel).filter(function (k) { return sel[k]; }) } };
+    if (sel.courses) out.courses = content.courses;
+    if (sel.paths) out.paths = content.paths;
+    if (sel.tags) out.tags = content.tags;
+    return out;
+  }
+
+  function exportFilename(sel) {
+    var parts = ['courses', 'paths', 'tags'].filter(function (k) { return sel[k]; });
+    return 'trivo-' + parts.join('-') + '-' + new Date().toISOString().slice(0, 10) + '.json';
+  }
+
+  function downloadJson(obj, filename) {
+    var blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Realistic-shaped example data plus a plain-English `_readme` block —
+  // JSON has no native comment syntax, so this is the standard workaround.
+  // The importer explicitly ignores any `_readme`/`_export`/`_comment`
+  // key, so leaving it in the file when you import it back is harmless.
+  function buildSamplePayload(which) {
+    var sampleCourse = {
+      id: 'c-sample-1', name: 'Example Course Name', label: 'Starter',
+      duration: '6 weeks', durationWeeks: 6, hours: 24,
+      hoursBreakdown: [{ label: 'Lectures', hours: 10 }, { label: 'Hands-on projects', hours: 14 }],
+      description: 'One or two sentences a student would actually read.',
+      tags: ['Beginner', 'Python'],
+      multiTierPricing: false,
+      prices: [{ id: 'p1', label: 'Standard', value: 4999, display: '' }],
+      contactForPricing: false,
+      visible: true, showOnHomepage: true
+    };
+    var sampleCourseMultiTier = {
+      id: 'c-sample-2', name: 'Example Course With Tiers', label: 'Advanced',
+      duration: '8 weeks', durationWeeks: 8, hours: 32, hoursBreakdown: [],
+      description: 'multiTierPricing:true means `prices` is shown as a labelled list instead of one number — good for early-bird vs regular, or per-cohort pricing.',
+      tags: ['Advanced'],
+      multiTierPricing: true,
+      prices: [
+        { id: 'p1', label: 'Early bird', value: 5999, display: '' },
+        { id: 'p2', label: 'Regular', value: 7999, display: '' }
+      ],
+      contactForPricing: false,
+      visible: true, showOnHomepage: false
+    };
+    var samplePath = {
+      id: 'path-sample-1', name: 'Example Bundle Name', label: 'Bundle',
+      description: 'Paths reference courses by id in includesCourseIds — those courses do NOT need visible:true, so you can bundle in a course nobody sees on its own.',
+      tags: ['Beginner'],
+      includesCourseIds: ['c-sample-1', 'c-sample-2'],
+      duration: '14 weeks', durationWeeks: 14, hours: 56, hoursBreakdown: [],
+      multiTierPricing: false,
+      prices: [{ id: 'p1', label: 'Standard', value: 9999, display: '' }],
+      contactForPricing: false,
+      visible: true, showOnHomepage: false
+    };
+    var readme = [
+      'This is a sample/template file, not real data — replace the example items and delete this whole file once you understand the shape, or just start editing it directly.',
+      'This _readme key (and _export below) is ignored automatically on import — you never need to remove it by hand.',
+      'value fields are plain numbers in rupees — used for the price range filter on the courses page. display is optional and only overrides how that ONE tier is shown as text (leave it blank to auto-format the number).',
+      'durationWeeks is a plain number used for the duration range filter — duration is the free-text label actually shown (e.g. "6 weeks", "6-8 weeks").',
+      'contactForPricing:true hides prices entirely and shows "Contact for pricing" instead, regardless of what\u2019s in `prices`.',
+      'visible:false means the item never gets its own card anywhere (homepage or courses page) — but a Path can still reference it by id in includesCourseIds and will show its name.',
+      'showOnHomepage only matters when visible:true — it controls the smaller homepage teaser section separately from the full courses.html listing.',
+      'Importing this file REPLACES whichever of courses/paths/tags you\u2019ve checked in the Import panel — it will show you exactly what\u2019s added/removed before anything saves.'
+    ];
+    if (which === 'courses') return { _readme: readme, _export: { type: EXPORT_TYPE, version: EXPORT_VERSION }, courses: { visible: true, kicker: 'Explore', title: 'Courses', note: '', fieldVisibility: { label: true, duration: true, hours: true, hoursBreakdown: true, tags: true, description: true, price: true }, items: [sampleCourse, sampleCourseMultiTier] } };
+    if (which === 'paths') return { _readme: readme, _export: { type: EXPORT_TYPE, version: EXPORT_VERSION }, paths: { visible: true, kicker: 'Bundles', title: 'Paths', note: '', fieldVisibility: { label: true, duration: true, hours: true, hoursBreakdown: true, tags: true, description: true, price: true }, items: [samplePath] } };
+    if (which === 'tags') return { _readme: readme, _export: { type: EXPORT_TYPE, version: EXPORT_VERSION }, tags: { items: ['Beginner', 'Intermediate', 'Advanced', 'Python'] } };
+    return {
+      _readme: readme, _export: { type: EXPORT_TYPE, version: EXPORT_VERSION },
+      courses: { visible: true, kicker: 'Explore', title: 'Courses', note: '', fieldVisibility: { label: true, duration: true, hours: true, hoursBreakdown: true, tags: true, description: true, price: true }, items: [sampleCourse, sampleCourseMultiTier] },
+      paths: { visible: true, kicker: 'Bundles', title: 'Paths', note: '', fieldVisibility: { label: true, duration: true, hours: true, hoursBreakdown: true, tags: true, description: true, price: true }, items: [samplePath] },
+      tags: { items: ['Beginner', 'Intermediate', 'Advanced', 'Python'] }
+    };
+  }
+
+  function diffByName(oldItems, newItems) {
+    var oldNames = (oldItems || []).map(function (i) { return i.name || i.id; });
+    var newNames = (newItems || []).map(function (i) { return i.name || i.id; });
+    return {
+      added: newNames.filter(function (n) { return oldNames.indexOf(n) === -1; }),
+      removed: oldNames.filter(function (n) { return newNames.indexOf(n) === -1; }),
+      kept: newNames.filter(function (n) { return oldNames.indexOf(n) !== -1; })
+    };
+  }
+
+  function handleImportFile(parsed, containerId) {
+    if (!parsed || typeof parsed !== 'object' || !parsed._export || parsed._export.type !== EXPORT_TYPE) {
+      alert('This doesn\u2019t look like a Trivo courses/paths/tags export file (missing or unrecognised _export marker). Nothing was changed.');
+      return;
+    }
+    var diffHtml = '<div class="ie-diff"><h4>This import will:</h4>';
+    var hasAny = false;
+    if (parsed.courses) {
+      hasAny = true;
+      var dc = diffByName(content.courses.items, parsed.courses.items);
+      diffHtml += renderDiffSection('Courses', dc);
+    }
+    if (parsed.paths) {
+      hasAny = true;
+      var dp = diffByName(content.paths.items, parsed.paths.items);
+      diffHtml += renderDiffSection('Paths', dp);
+    }
+    if (parsed.tags) {
+      hasAny = true;
+      var oldTags = content.tags.items, newTags = parsed.tags.items || [];
+      diffHtml += renderDiffSection('Tags', {
+        added: newTags.filter(function (t) { return oldTags.indexOf(t) === -1; }),
+        removed: oldTags.filter(function (t) { return newTags.indexOf(t) === -1; }),
+        kept: newTags.filter(function (t) { return oldTags.indexOf(t) !== -1; })
+      });
+    }
+    if (!hasAny) { alert('That file doesn\u2019t contain courses, paths, or tags — nothing to import.'); return; }
+    diffHtml += '<div class="row" style="margin-top:0.75rem;"><button class="primary" id="btnConfirmImport_' + containerId + '">Replace and save</button> <button id="btnCancelImport_' + containerId + '">Cancel</button></div></div>';
+
+    var diffSlot = document.getElementById('ieDiff_' + containerId);
+    diffSlot.innerHTML = diffHtml;
+    document.getElementById('btnCancelImport_' + containerId).addEventListener('click', function () { diffSlot.innerHTML = ''; });
+    document.getElementById('btnConfirmImport_' + containerId).addEventListener('click', function () {
+      if (parsed.courses) content.courses = parsed.courses;
+      if (parsed.paths) content.paths = parsed.paths;
+      if (parsed.tags) content.tags = parsed.tags;
+      ensureCollectionsShape(content);
+      api('POST', 'content', { content: content }).then(function () {
+        toast('Import complete');
+        diffSlot.innerHTML = '';
+        renderCoursesTab(); renderPathsTab(); renderTagsTab();
+      }).catch(function (err) { toast('Import save failed: ' + err.message); });
+    });
+  }
+
+  function renderDiffSection(title, d) {
+    var html = '<h4>' + escapeHtml(title) + '</h4><ul>';
+    d.added.forEach(function (n) { html += '<li class="add">+ Add \u201c' + escapeHtml(n) + '\u201d</li>'; });
+    d.removed.forEach(function (n) { html += '<li class="remove">\u2212 Remove \u201c' + escapeHtml(n) + '\u201d</li>'; });
+    if (d.kept.length) html += '<li class="keep">' + d.kept.length + ' unchanged (' + d.kept.slice(0, 5).map(escapeHtml).join(', ') + (d.kept.length > 5 ? ', \u2026' : '') + ')</li>';
+    if (!d.added.length && !d.removed.length && !d.kept.length) html += '<li class="keep">Nothing in this file.</li>';
+    return html + '</ul>';
+  }
 
   function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

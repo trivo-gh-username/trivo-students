@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Courses & Paths — Trivo Student Programs</title>
+<meta name="description" content="Browse every Trivo Student Programs course and bundled path. Filter by topic, duration, or price to find the right starting point." />
+<meta property="og:title" content="Courses & Paths — Trivo Student Programs" />
+<meta name="theme-color" content="#0a0a0f" />
+<link rel="icon" href="data:," />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/app.css" />
+<link rel="stylesheet" href="css/tailwind.css" />
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<nav class="nav">
+  <a class="nav__brand" href="index.html">Trivo<span>.</span> Students</a>
+  <div class="nav__links">
+    <a href="courses.html" aria-current="page">Courses</a>
+    <a href="index.html#how-it-works">How it works</a>
+    <a href="index.html#faq">FAQ</a>
+    <a href="https://trivoailabs.com" target="_blank" rel="noopener">For colleges</a>
+  </div>
+  <a class="btn btn--primary btn--sm" href="students-form.html">Register</a>
+</nav>
+
+<main class="wrap" style="padding-top: var(--s-8);">
+  <div class="stats-head">
+    <span class="kicker">Explore everything</span>
+    <h1 class="section-title">Courses &amp; Paths</h1>
+    <p class="hero__sub" style="font-size: var(--t-sm); margin-top: var(--s-4);">Every course on its own, and every bundled path. Filter to find the right starting point.</p>
+  </div>
+
+  <!-- ── Filter bar ──────────────────────────────────────────────────── -->
+  <div class="catalog-filters" data-reveal>
+    <div class="catalog-filters__row">
+      <input type="search" id="cfSearch" class="catalog-filters__search" placeholder="Search courses and paths…" aria-label="Search" />
+      <div class="catalog-filters__type" role="group" aria-label="Filter by type">
+        <button type="button" class="catalog-type-btn is-active" data-type="all">All</button>
+        <button type="button" class="catalog-type-btn" data-type="course">Courses</button>
+        <button type="button" class="catalog-type-btn" data-type="path">Paths</button>
+      </div>
+    </div>
+
+    <div class="catalog-filters__row catalog-filters__row--ranges">
+      <div class="catalog-range">
+        <label>Duration (weeks)</label>
+        <div class="catalog-range__inputs">
+          <input type="number" id="cfWeeksMin" min="0" placeholder="Min" />
+          <span>&ndash;</span>
+          <input type="number" id="cfWeeksMax" min="0" placeholder="Max" />
+        </div>
+      </div>
+      <div class="catalog-range">
+        <label>Price (₹)</label>
+        <div class="catalog-range__inputs">
+          <input type="number" id="cfPriceMin" min="0" placeholder="Min" />
+          <span>&ndash;</span>
+          <input type="number" id="cfPriceMax" min="0" placeholder="Max" />
+        </div>
+      </div>
+      <button type="button" class="catalog-clear-btn" id="cfClear">Clear filters</button>
+    </div>
+
+    <div class="catalog-filters__tags" id="cfTags" aria-label="Filter by tag"></div>
+  </div>
+
+  <p class="muted" id="cfSummary" style="margin: var(--s-5) 0;"></p>
+
+  <div class="courses-grid" id="catalogGrid">
+    <article class="course-card is-skeleton" aria-hidden="true">
+      <div class="course-card__title">Loading…</div>
+    </article>
+  </div>
+  <p class="catalog-empty" id="cfEmpty" hidden>No courses or paths match those filters. <button type="button" id="cfEmptyClear">Clear filters</button></p>
+</main>
+
+<!-- ── Closing CTA ───────────────────────────────────────────────────── -->
+<section class="closing-section wrap">
+  <div class="closing-card" data-reveal>
+    <h2 class="closing-card__title">Ready to get ahead of the curve?</h2>
+    <a class="btn btn--primary" href="students-form.html">Register now <span aria-hidden="true">→</span></a>
+  </div>
+</section>
+
+<footer class="footer wrap">
+  <div class="footer__row">
+    <div class="nav__brand" style="font-size: var(--t-base);">Trivo<span>.</span> Students</div>
+    <nav class="footer__links">
+      <a href="students-form.html">Register</a>
+      <a href="courses.html">Courses</a>
+      <a href="https://trivoailabs.com" target="_blank" rel="noopener">For colleges</a>
+      <a href="mailto:students@trivoailabs.com">Contact</a>
+    </nav>
+  </div>
+</footer>
+
+<a class="btn btn--primary floating-cta__btn floating-cta" id="floatingCta" href="students-form.html">
+  <span id="floatingCtaLabel">Register now</span> <span aria-hidden="true">→</span>
+</a>
+
+<script src="js/config.js"></script>
+<script src="js/catalog.js"></script>
+<script>
+(function () {
+  'use strict';
+  var esc = TrivoCatalog.esc;
+  var state = { query: '', type: 'all', tags: [], minWeeks: null, maxWeeks: null, minPrice: null, maxPrice: null };
+  var allItems = [];
+  var cfg = null;
+
+  function readNum(el) {
+    var v = el.value.trim();
+    if (v === '') return null;
+    var n = Number(v);
+    return isFinite(n) ? n : null;
+  }
+
+  function applyFilters() {
+    state.query = document.getElementById('cfSearch').value;
+    state.minWeeks = readNum(document.getElementById('cfWeeksMin'));
+    state.maxWeeks = readNum(document.getElementById('cfWeeksMax'));
+    state.minPrice = readNum(document.getElementById('cfPriceMin'));
+    state.maxPrice = readNum(document.getElementById('cfPriceMax'));
+
+    var filtered = TrivoCatalog.filterItems(cfg, allItems, state);
+    var grid = document.getElementById('catalogGrid');
+    var empty = document.getElementById('cfEmpty');
+    if (!filtered.length) {
+      grid.innerHTML = '';
+      empty.hidden = false;
+    } else {
+      empty.hidden = true;
+      grid.innerHTML = filtered.map(function (item, i) { return TrivoCatalog.renderCard(cfg, item, i, false); }).join('');
+    }
+    document.getElementById('cfSummary').textContent = filtered.length + ' of ' + allItems.length + ' shown';
+  }
+
+  var searchDebounce = null;
+  document.getElementById('cfSearch').addEventListener('input', function () {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(applyFilters, 200);
+  });
+  ['cfWeeksMin', 'cfWeeksMax', 'cfPriceMin', 'cfPriceMax'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', applyFilters);
+  });
+  document.querySelectorAll('.catalog-type-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.catalog-type-btn').forEach(function (b) { b.classList.remove('is-active'); });
+      btn.classList.add('is-active');
+      state.type = btn.dataset.type;
+      applyFilters();
+    });
+  });
+  function clearFilters() {
+    document.getElementById('cfSearch').value = '';
+    document.getElementById('cfWeeksMin').value = '';
+    document.getElementById('cfWeeksMax').value = '';
+    document.getElementById('cfPriceMin').value = '';
+    document.getElementById('cfPriceMax').value = '';
+    document.querySelectorAll('.catalog-type-btn').forEach(function (b) { b.classList.remove('is-active'); });
+    document.querySelector('.catalog-type-btn[data-type="all"]').classList.add('is-active');
+    state.type = 'all';
+    document.querySelectorAll('.catalog-tag-chip').forEach(function (c) { c.classList.remove('is-active'); });
+    state.tags = [];
+    applyFilters();
+  }
+  document.getElementById('cfClear').addEventListener('click', clearFilters);
+  document.getElementById('cfEmptyClear').addEventListener('click', clearFilters);
+
+  TrivoStudents.load().then(function (loadedCfg) {
+    cfg = loadedCfg;
+    allItems = TrivoCatalog.normalizeItems(cfg);
+
+    var tagsUsed = {};
+    allItems.forEach(function (item) { (item.tags || []).forEach(function (t) { tagsUsed[t] = true; }); });
+    var tagList = ((cfg.tags && cfg.tags.items) || []).filter(function (t) { return tagsUsed[t]; });
+    document.getElementById('cfTags').innerHTML = tagList.map(function (t) {
+      return '<button type="button" class="catalog-tag-chip" data-tag="' + esc(t) + '">' + esc(t) + '</button>';
+    }).join('');
+    document.querySelectorAll('.catalog-tag-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        chip.classList.toggle('is-active');
+        var tag = chip.dataset.tag;
+        var idx = state.tags.indexOf(tag);
+        if (chip.classList.contains('is-active') && idx === -1) state.tags.push(tag);
+        else if (!chip.classList.contains('is-active') && idx !== -1) state.tags.splice(idx, 1);
+        applyFilters();
+      });
+    });
+
+    applyFilters();
+    TrivoStudents.renderFloatingCta(cfg);
+  }).catch(function (err) {
+    console.error('Failed to load catalog:', err);
+    document.getElementById('catalogGrid').innerHTML = '<p class="muted">Could not load courses right now — please refresh.</p>';
+  });
+
+  // Same reveal-on-scroll behaviour as the homepage, for the page's own
+  // static elements (heading, closing CTA) — the results grid itself
+  // renders without data-reveal (see catalog.js) since it's re-rendered
+  // live on every filter change, not loaded once.
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('[data-reveal]').forEach(function (el) { io.observe(el); });
+    });
+  }
+})();
+</script>
+</body>
+</html>

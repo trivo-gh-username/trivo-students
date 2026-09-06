@@ -93,17 +93,9 @@
     setText(document.getElementById('coursesTitle'), c.title);
     setText(document.getElementById('coursesNote'), c.note || '');
     var grid = document.getElementById('coursesGrid');
-    if (grid) {
-      grid.innerHTML = (c.items || []).map(function (item, i) {
-        var tags = (item.tags || []).map(function (t) { return '<span class="tag-pill">' + esc(t) + '</span>'; }).join('');
-        return '<article class="course-card" data-reveal data-delay="' + (i % 4) + '">' +
-          '<div class="course-card__label">' + esc(item.label || '') + '</div>' +
-          '<h3 class="course-card__title">' + esc(item.name) + '</h3>' +
-          '<div class="course-card__meta"><span>' + esc(item.duration || '') + '</span><span>·</span><span>' + (item.hours || 0) + ' hrs</span></div>' +
-          '<p class="course-card__desc">' + esc(item.description || '') + '</p>' +
-          '<div class="course-card__tags">' + tags + '</div>' +
-          '</article>';
-      }).join('');
+    if (grid && global.TrivoCatalog) {
+      var items = TrivoCatalog.normalizeItems(cfg).filter(function (item) { return item.showOnHomepage !== false; });
+      grid.innerHTML = items.map(function (item, i) { return TrivoCatalog.renderCard(cfg, item, i, true); }).join('');
     }
   }
 
