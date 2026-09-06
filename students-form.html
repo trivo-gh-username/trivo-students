@@ -2,33 +2,308 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Register — Trivo Student Programs</title>
 <meta name="robots" content="noindex" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/app.css" />
+<!-- Tailwind (Play CDN, no build step — matches this project's
+     zero-framework approach). Preflight is disabled so Tailwind's base
+     reset can't silently override the site's existing hand-tuned CSS;
+     utility classes are still fully available. Brand colors are mapped
+     to the same tokens as css/app.css so `bg-accent`, `text-accent-2`
+     etc. stay in sync with the rest of the site. -->
+<script src="https://cdn.tailwindcss.com" defer></script>
+<script>
+  // Deferred, and guarded: if the CDN is slow/blocked/offline, the rest of
+  // the page (and the questionnaire's own JS) must still work — this
+  // should enhance the page, never be a dependency it can't function
+  // without.
+  window.addEventListener('DOMContentLoaded', function () {
+    if (!window.tailwind) return;
+    tailwind.config = {
+      corePlugins: { preflight: false },
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0a0a0f', 'bg-card': '#15151f', 'bg-raised': '#111118',
+            line: '#26262f', 'line-strong': '#34343f',
+            fg: '#f5f5f7', 'fg-muted': '#a8a8b8', 'fg-subtle': '#6f6f80',
+            accent: '#7c5cff', 'accent-2': '#40e0d0'
+          },
+          fontFamily: {
+            display: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
+            body: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
+          }
+        }
+      }
+    };
+  });
+</script>
 <style>
-  /* This is the TEMPORARY single-page form — see README.md "What's
-     temporary here." The real version will be a multi-step, save-as-you-go
-     experience with interleaved educational content. This is deliberately
-     minimal in the meantime. */
-  .form-wrap { max-width: 560px; margin: var(--s-9) auto var(--s-8); padding-inline: var(--s-5); position: relative; z-index: 1; }
-  .form-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s-7); }
-  .field { margin-bottom: var(--s-5); }
-  .field label { display: block; font-size: var(--t-xs); font-weight: 600; color: var(--fg-muted); margin-bottom: var(--s-2); }
-  .field input, .field select, .field textarea {
-    width: 100%; padding: 0.85rem 1rem; border-radius: var(--r-sm);
-    border: 1px solid var(--line-strong); background: var(--bg); color: var(--fg);
-    font-family: var(--font-body); font-size: var(--t-sm);
+  /* ============================================================
+     Questionnaire-specific styling. Built on top of the shared
+     design tokens in css/app.css (loaded above) — same dark
+     palette, same Space Grotesk + Inter pairing as the rest of
+     the site, so this doesn't feel like a bolted-on third-party
+     form embed.
+     ============================================================ */
+
+  body { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+
+  /* ── Top chrome ─────────────────────────────────────────────── */
+  .qz-progress-track {
+    position: sticky; top: 0; z-index: 39;
+    height: 4px; width: 100%; background: var(--line); overflow: hidden;
   }
-  .field input:focus, .field select:focus, .field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .honeypot { position: absolute; left: -9999px; }
-  .form-note { font-size: var(--t-xs); color: var(--fg-subtle); margin-top: var(--s-4); }
-  .thankyou { text-align: center; padding: var(--s-6) 0; }
-  .thankyou__title { font-family: var(--font-display); font-size: var(--t-xl); color: var(--accent-2); margin-bottom: var(--s-3); }
-  .alert-err { display: none; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.4); color: var(--warn); padding: var(--s-4); border-radius: var(--r-sm); margin-bottom: var(--s-5); font-size: var(--t-sm); }
+  .qz-progress-fill {
+    height: 100%; width: 0%; position: relative;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.6s var(--ease);
+  }
+  /* A quiet moving highlight so the bar reads as "alive" while a step is
+     in progress, not just a static fill — the one bit of ambient motion
+     on the page, deliberately subtle. */
+  .qz-progress-fill::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    width: 35%; animation: qzShimmer 2.6s ease-in-out infinite;
+  }
+  @keyframes qzShimmer { 0% { transform: translateX(-120%); } 100% { transform: translateX(340%); } }
+  @media (prefers-reduced-motion: reduce) { .qz-progress-fill::after { animation: none; } }
+
+  /* ── Stage ──────────────────────────────────────────────────── */
+  .qz-main { flex: 1; display: flex; flex-direction: column; position: relative; z-index: 1; }
+  .qz-stage-wrap {
+    flex: 1; display: flex; align-items: center;
+    padding: var(--s-6) var(--s-5) var(--s-8);
+  }
+  .qz-stage {
+    max-width: 640px; margin-inline: auto; width: 100%;
+  }
+  .qz-card {
+    background: var(--bg-card); border: 1px solid var(--line);
+    border-radius: var(--r-lg); padding: var(--s-6) var(--s-5);
+  }
+  @media (min-width: 640px) { .qz-card { padding: var(--s-7); } }
+
+  /* Directional step transitions: forward feels like moving on, back
+     feels like rewinding — a small but real signal of navigation. */
+  .qz-step-in-fwd { animation: qzInFwd 0.24s ease-out both; }
+  .qz-step-in-back { animation: qzInBack 0.24s ease-out both; }
+  @keyframes qzInFwd { from { opacity: 0; transform: translate(8px, 3px); } to { opacity: 1; transform: translate(0,0); } }
+  @keyframes qzInBack { from { opacity: 0; transform: translate(-8px, 3px); } to { opacity: 1; transform: translate(0,0); } }
+  @media (prefers-reduced-motion: reduce) { .qz-step-in-fwd, .qz-step-in-back { animation: none; } }
+
+  .qz-eyebrow {
+    display: flex; align-items: center; gap: var(--s-3);
+    margin-bottom: var(--s-5);
+  }
+  .qz-eyebrow__num {
+    font-family: var(--font-display); font-weight: 700; font-size: var(--t-xs);
+    color: var(--accent-2); background: rgba(64,224,208,0.1);
+    border: 1px solid rgba(64,224,208,0.25); border-radius: var(--r-pill);
+    padding: 0.2rem 0.65rem; white-space: nowrap;
+  }
+  .qz-eyebrow__section { font-size: var(--t-xs); color: var(--fg-subtle); }
+
+  .qz-prompt {
+    font-family: var(--font-display); font-weight: 600;
+    font-size: clamp(1.25rem, 4.2vw, var(--t-xl));
+    line-height: 1.25; margin-bottom: var(--s-3);
+  }
+  .qz-help { color: var(--fg-muted); font-size: var(--t-sm); margin-bottom: var(--s-6); }
+
+  /* Grouped fields — several short questions on one screen ("club some
+     fields together" so the whole thing doesn't feel like 17 taps). */
+  .qz-field-group { margin-bottom: var(--s-6); }
+  .qz-field-group:last-child { margin-bottom: 0; }
+  .qz-field-label { font-family: var(--font-display); font-weight: 600; font-size: var(--t-base); margin-bottom: var(--s-2); }
+  .qz-field-help { color: var(--fg-muted); font-size: var(--t-xs); margin-bottom: var(--s-3); }
+
+  /* ── Text / email / tel inputs ─────────────────────────────── */
+  .qz-input {
+    width: 100%; padding: 1rem 1.1rem; border-radius: var(--r-md);
+    border: 1.5px solid var(--line-strong); background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: 1rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .qz-input:focus { outline: none; border-color: var(--accent-2); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .qz-field-err { display: none; color: var(--warn); font-size: var(--t-xs); margin-top: var(--s-3); }
+  .qz-field-err.show { display: block; animation: qzShake 0.3s var(--ease); }
+  @keyframes qzShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+  @media (prefers-reduced-motion: reduce) { .qz-field-err.show { animation: none; } }
+
+  /* ── Choice pills (single / multi) ─────────────────────────── */
+  .qz-options { display: grid; gap: var(--s-3); }
+  .qz-option {
+    display: flex; align-items: center; gap: var(--s-3);
+    padding: var(--s-4) var(--s-5); border-radius: var(--r-md);
+    border: 1.5px solid var(--line-strong); background: var(--bg); color: var(--fg);
+    font-size: var(--t-sm); font-family: var(--font-body); text-align: left;
+    cursor: pointer; transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .qz-option:hover { border-color: var(--accent-2); }
+  .qz-option:active { transform: scale(0.99); }
+  .qz-option.is-selected { border-color: var(--accent-2); background: var(--accent-soft); }
+  .qz-option__mark {
+    flex: none; width: 20px; height: 20px; border-radius: 50%;
+    border: 1.5px solid var(--line-strong); position: relative;
+  }
+  .qz-option.is-selected .qz-option__mark { border-color: var(--accent-2); background: var(--accent-2); }
+  .qz-option.is-selected .qz-option__mark::after {
+    content: ''; position: absolute; inset: 5px; background: var(--bg-card); border-radius: 50%;
+  }
+  .qz-options[data-shape="square"] .qz-option__mark { border-radius: 6px; }
+  .qz-options[data-shape="square"] .qz-option.is-selected .qz-option__mark::after { border-radius: 2px; }
+  /* Applied transiently, via JS, ONLY to the exact pill/chip the user just
+     tapped — not to every already-selected element. Re-rendering a whole
+     screen on every tap (needed to keep things simple/correct) used to
+     mean every previously-picked option replayed this animation at once
+     whenever you picked something new, which read as a chaotic jitter
+     across the screen instead of one small, satisfying tap response. */
+  .qz-just-picked { animation: qzPop 0.16s ease-out; }
+  @keyframes qzPop { 0% { transform: scale(1); } 50% { transform: scale(1.015); } 100% { transform: scale(1); } }
+  @media (prefers-reduced-motion: reduce) { .qz-just-picked { animation: none; } }
+
+  .qz-inline-note { font-size: var(--t-xs); color: var(--fg-subtle); margin-top: var(--s-4); }
+
+  .qz-reveal { margin-top: var(--s-3); max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.25s var(--ease), opacity 0.2s var(--ease); }
+  .qz-reveal.show { max-height: 120px; opacity: 1; }
+
+  /* ── Grid-style questions rendered as stacked rows, never a real
+        table — a real <table> is exactly what causes "grids are
+        where mobile respondents quit" per the source notes. ── */
+  .qz-grid-list { display: grid; gap: var(--s-5); }
+  .qz-grid-row {
+    border: 1px solid var(--line); border-radius: var(--r-md);
+    padding: var(--s-4); background: var(--bg-raised);
+  }
+  .qz-grid-row__label { font-size: var(--t-sm); font-weight: 600; margin-bottom: var(--s-3); }
+  .qz-grid-row__opts { display: flex; flex-wrap: wrap; gap: var(--s-2); }
+  .qz-chip {
+    padding: 0.5rem 0.85rem; border-radius: var(--r-pill);
+    border: 1.5px solid var(--line-strong); background: var(--bg);
+    color: var(--fg-muted); font-size: 0.8rem; font-family: var(--font-body);
+    cursor: pointer; white-space: nowrap; transition: border-color 0.15s, background 0.15s, color 0.15s;
+  }
+  .qz-chip.is-selected { border-color: var(--accent-2); background: var(--accent-soft); color: var(--fg); }
+  .qz-grid-progress { font-size: var(--t-xs); color: var(--fg-subtle); margin-bottom: var(--s-5); }
+
+  /* ── Sticky bottom action bar ───────────────────────────────── */
+  .qz-actions {
+    position: sticky; bottom: 0; z-index: 38;
+    background: linear-gradient(0deg, var(--bg) 55%, transparent);
+    padding: var(--s-5) var(--s-5) calc(var(--s-5) + env(safe-area-inset-bottom));
+  }
+  .qz-actions-row {
+    max-width: 640px; margin-inline: auto;
+    display: flex; gap: var(--s-3); align-items: center;
+  }
+  .qz-btn-back {
+    flex: none; background: transparent; border: 1.5px solid var(--line-strong);
+    color: var(--fg-muted); border-radius: var(--r-pill); padding: 0.85rem 1.1rem;
+    font-family: var(--font-display); font-weight: 600; font-size: var(--t-sm); cursor: pointer;
+  }
+  .qz-btn-next {
+    flex: 1; border: none; border-radius: var(--r-pill); padding: 0.95rem 1.5rem;
+    font-family: var(--font-display); font-weight: 600; font-size: var(--t-sm); cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), #9b7bff); color: #fff;
+    box-shadow: 0 8px 24px -8px rgba(124,92,255,0.6);
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .qz-btn-next:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+  .qz-btn-next:not(:disabled):active { transform: scale(0.99); }
+
+  /* Toasts + resume banner are styled with Tailwind utility classes
+     directly in their markup (see JS below) rather than here — kept as
+     the one deliberately-Tailwind-first part of this page. Only the
+     bits Tailwind can't express (the slide/fade transition and its
+     "show" state) stay as real CSS. */
+  .qz-toast-wrap {
+    position: fixed; left: 0; right: 0; bottom: calc(4.5rem + env(safe-area-inset-bottom));
+    z-index: 45; display: flex; justify-content: center; padding-inline: 1.5rem;
+    pointer-events: none;
+  }
+  .qz-toast { transform: translateY(140%); opacity: 0; transition: transform 0.35s var(--ease), opacity 0.35s var(--ease); }
+  .qz-toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── Intro / outro full screens ─────────────────────────────── */
+  .qz-splash { text-align: center; padding: var(--s-6) 0; }
+  .qz-splash__kicker {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.03em;
+    color: var(--accent-2); background: rgba(64,224,208,0.08);
+    border: 1px solid rgba(64,224,208,0.25); padding: 0.4rem 0.9rem;
+    border-radius: var(--r-pill); margin-bottom: var(--s-6);
+  }
+  .qz-splash__title {
+    font-family: var(--font-display); font-weight: 600;
+    font-size: clamp(1.6rem, 6vw, var(--t-2xl)); line-height: 1.15;
+    margin-bottom: var(--s-4);
+  }
+  .qz-splash__body { color: var(--fg-muted); font-size: var(--t-base); max-width: 46ch; margin-inline: auto; margin-bottom: var(--s-7); }
+  .qz-meta-row {
+    display: flex; justify-content: center; gap: var(--s-6); flex-wrap: wrap;
+    margin-bottom: var(--s-7); font-size: var(--t-xs); color: var(--fg-subtle);
+  }
+  .qz-meta-row div { opacity: 0; animation: qzMetaIn 0.5s var(--ease) both; }
+  .qz-meta-row div:nth-child(1) { animation-delay: 0.05s; }
+  .qz-meta-row div:nth-child(2) { animation-delay: 0.15s; }
+  .qz-meta-row div:nth-child(3) { animation-delay: 0.25s; }
+  @keyframes qzMetaIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) { .qz-meta-row div { animation: none; opacity: 1; } }
+  .qz-meta-row strong { display: block; color: var(--fg); font-family: var(--font-display); font-size: var(--t-lg); }
+
+  .qz-track-badge {
+    display: inline-block; font-family: var(--font-display); font-weight: 700;
+    font-size: var(--t-lg); color: var(--accent-2); margin: var(--s-3) 0 var(--s-5);
+    opacity: 0; animation: qzBadgeIn 0.5s var(--ease) 0.5s both;
+  }
+  @keyframes qzBadgeIn { from { opacity: 0; transform: scale(0.85) translateY(6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  @media (prefers-reduced-motion: reduce) { .qz-track-badge { animation: none; opacity: 1; } }
+
+  .qz-summary-list { text-align: left; max-width: 420px; margin: 0 auto var(--s-7); display: grid; gap: var(--s-3); }
+  .qz-summary-list li { list-style: none; display: flex; justify-content: space-between; gap: var(--s-4); font-size: var(--t-sm); border-bottom: 1px dashed var(--line); padding-bottom: var(--s-3); }
+  .qz-summary-list li span:first-child { color: var(--fg-subtle); }
+  .qz-summary-list li span:last-child { color: var(--fg); font-weight: 600; text-align: right; }
+
+  .qz-checkmark { width: 72px; height: 72px; margin: 0 auto var(--s-5); display: block; }
+  .qz-checkmark circle {
+    fill: none; stroke: var(--accent-2); stroke-width: 3;
+    stroke-dasharray: 220; stroke-dashoffset: 220;
+    animation: qzDrawCircle 0.6s var(--ease) forwards;
+  }
+  .qz-checkmark path {
+    fill: none; stroke: var(--accent-2); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 40; stroke-dashoffset: 40;
+    animation: qzDrawCheck 0.35s var(--ease) 0.55s forwards;
+  }
+  @keyframes qzDrawCircle { to { stroke-dashoffset: 0; } }
+  @keyframes qzDrawCheck { to { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .qz-checkmark circle, .qz-checkmark path { animation: none; stroke-dashoffset: 0; }
+  }
+
+
+  .qz-alert {
+    display: none; text-align: left; background: rgba(251,191,36,0.1);
+    border: 1px solid rgba(251,191,36,0.4); color: var(--warn);
+    padding: var(--s-4); border-radius: var(--r-sm); margin-bottom: var(--s-5); font-size: var(--t-sm);
+  }
+  .qz-alert.show { display: block; }
+  .qz-alert a { color: var(--accent-2); text-decoration: underline; }
+
+  .qz-spinner {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
+    animation: qzSpin 0.7s linear infinite; flex: none;
+  }
+  @keyframes qzSpin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -38,115 +313,695 @@
   <a class="nav__brand" href="index.html">Trivo<span>.</span> Students</a>
 </nav>
 
-<div class="form-wrap">
-  <h1 style="font-family:var(--font-display); font-size: var(--t-2xl); margin-bottom: var(--s-2);">Register your interest</h1>
-  <p style="color: var(--fg-muted); margin-bottom: var(--s-7);">Takes about 2 minutes. We'll follow up with a personalized recommendation.</p>
+<div class="qz-progress-track" aria-hidden="true"><div class="qz-progress-fill" id="qzProgressFill"></div></div>
 
-  <div class="form-card">
-    <div class="alert-err" id="formErr">That didn't go through. Please try again, or email <a href="mailto:students@trivoailabs.com" style="color:var(--accent-2);">students@trivoailabs.com</a> directly.</div>
-
-    <div class="thankyou" id="thankyou" hidden>
-      <p class="thankyou__title">You're in ✓</p>
-      <p style="color: var(--fg-muted);">Thanks for registering — we'll be in touch shortly with next steps.</p>
-      <a class="btn btn--ghost" href="index.html" style="margin-top: var(--s-5);">Back to home</a>
-    </div>
-
-    <form id="regForm">
-      <p class="honeypot" aria-hidden="true">
-        <label>Do not fill this in
-          <input type="text" name="company-website" tabindex="-1" autocomplete="off" />
-        </label>
-      </p>
-
-      <div class="field">
-        <label for="f-name">Full name *</label>
-        <input id="f-name" name="name" type="text" required autocomplete="name" />
-      </div>
-      <div class="field">
-        <label for="f-email">Email *</label>
-        <input id="f-email" name="email" type="email" required autocomplete="email" />
-      </div>
-      <div class="field">
-        <label for="f-phone">Phone</label>
-        <input id="f-phone" name="phone" type="tel" autocomplete="tel" />
-      </div>
-      <div class="field">
-        <label for="f-college">College / year (optional)</label>
-        <input id="f-college" name="college" type="text" placeholder="e.g. XYZ Engineering College, 2nd year" />
-      </div>
-      <div class="field">
-        <label for="f-path">Which path interests you?</label>
-        <select id="f-path" name="path">
-          <option value="">Not sure yet — recommend one</option>
-          <option value="beginner">Just starting out</option>
-          <option value="some">Ready to build real projects</option>
-          <option value="advanced">Ready to go deep (agents, advanced systems)</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="f-message">Anything else we should know?</label>
-        <textarea id="f-message" name="message" rows="3"></textarea>
-      </div>
-
-      <button class="btn btn--primary" type="submit" style="width:100%; justify-content:center;">Register now</button>
-      <p class="form-note">By registering you agree to be contacted about Trivo's student programmes. We don't share your details with anyone else.</p>
-    </form>
+<main class="qz-main">
+  <div id="qzResumeSlot"></div>
+  <div class="qz-stage-wrap">
+    <div class="qz-stage" id="qzStage"><!-- rendered by JS --></div>
   </div>
-</div>
+  <div class="qz-actions" id="qzActions" hidden>
+    <div class="qz-actions-row">
+      <button type="button" class="qz-btn-back" id="qzBack">Back</button>
+      <button type="button" class="qz-btn-next" id="qzNext">Continue</button>
+    </div>
+  </div>
+</main>
+
+<div class="qz-toast-wrap" id="qzToastWrap"></div>
 
 <script>
-  (function () {
-    var form = document.getElementById('regForm');
-    var thankyou = document.getElementById('thankyou');
-    var errBox = document.getElementById('formErr');
-    form.dataset.renderedAt = String(Date.now());
+(function () {
+  'use strict';
 
-    // Pre-fill the path from the landing-page quiz, if the visitor came from there.
-    var params = new URLSearchParams(location.search);
-    var path = params.get('path');
-    if (path) {
-      var sel = document.getElementById('f-path');
-      if (sel && sel.querySelector('option[value="' + path + '"]')) sel.value = path;
+  /* ============================================================
+     1. QUESTION MODEL — sourced from trivo-students-form.xlsx
+     ("New One" sheet). Field wording, options and the % complete
+     values are taken from that sheet; the internal "why it
+     matters" analyst notes in the sheet were written for Trivo's
+     own use, so the student-facing copy below is rewritten in a
+     plain, friendly voice instead of reusing that internal copy.
+
+     Related fields are grouped onto one screen where they're each
+     quick (e.g. name + WhatsApp + email together) — 10 screens
+     covering all 17 data points, not 17 separate taps.
+     ============================================================ */
+
+  function nextWeekday(base, weekday) { // 0=Sun..6=Sat
+    var d = new Date(base);
+    d.setDate(d.getDate() + ((7 + weekday - d.getDay()) % 7 || 7));
+    return d;
+  }
+  function fmtDate(d) {
+    return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  }
+  var today = new Date();
+  var upcomingSat = nextWeekday(today, 6);
+  var upcomingSun = nextWeekday(today, 0);
+
+  var AI_TOOL_ROWS = [
+    'ChatGPT / Gemini / Claude / Perplexity',
+    'GitHub Copilot / Cursor',
+    'Canva Magic Studio / Midjourney / Stable Diffusion',
+    'Hugging Face / Ollama',
+    'n8n / Make / Zapier / NotebookLM',
+    'Replit / Lovable / Bolt'
+  ];
+  var AI_TOOL_LEVELS = ['Never heard of it', 'Heard of it, never used', 'Used it a few times', 'Use it regularly', 'Built something with its API'];
+
+  var AI_CONCEPT_ROWS = [
+    'Prompt engineering', 'Context window / tokens', 'Hallucination',
+    'API key & rate limits', 'Embeddings & vector databases', 'RAG / fine-tuning',
+    'Agents & tool-calling', 'Model evaluation', 'MCP'
+  ];
+  var SKILL_ROWS = [
+    'Python basics (loops, functions)', 'Python libraries (pandas, numpy)', 'SQL',
+    'Git & GitHub', 'A web framework (Flask / FastAPI / React / Node)', 'Calling a REST API',
+    'Data structures & algorithms', 'Maths for ML (probability, linear algebra)', 'Cloud basics (AWS / Azure / GCP)'
+  ];
+  var RATE_LEVELS = ['1', '2', '3', '4', '5', 'Never used it'];
+
+  var STEPS = [
+    { id: 'aboutYou', weight: 15, section: '01 · About you',
+      title: 'Let\u2019s start with the basics', subtitle: 'Three quick ones, then we get to the interesting stuff.',
+      fields: [
+        { id: 'name', type: 'text', label: 'Full name', help: 'As you\u2019d like it on a certificate.',
+          inputType: 'text', autocomplete: 'name', placeholder: 'e.g. Priya Sharma', required: true },
+        { id: 'whatsapp', type: 'text', label: 'WhatsApp number', help: 'Not your college email\u2019s inbox \u2014 WhatsApp, so updates actually reach you.',
+          inputType: 'tel', autocomplete: 'tel', placeholder: '10-digit mobile number', pattern: '^[6-9]\\d{9}$',
+          errMsg: 'Enter a valid 10-digit Indian mobile number.', required: true },
+        { id: 'email', type: 'text', label: 'Personal email', help: 'Not your college one \u2014 those get switched off right after graduation.',
+          inputType: 'email', autocomplete: 'email', placeholder: 'you@gmail.com',
+          pattern: '^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$', errMsg: 'Enter a valid email address.', required: true }
+      ] },
+
+    { id: 'academic', weight: 30, section: '02 · Academic profile',
+      title: 'A bit about your college life', subtitle: '',
+      fields: [
+        { id: 'college', type: 'text', label: 'College name', help: 'Full name is great \u2014 no need to abbreviate.',
+          inputType: 'text', autocomplete: 'organization', placeholder: 'e.g. XYZ Engineering College', required: true },
+        { id: 'branch', type: 'single', label: 'Branch / department', shape: 'square', other: true, required: true,
+          options: ['CSE', 'CSE (AI & ML)', 'CSE (Data Science)', 'IT', 'ECE', 'EEE', 'Mechanical', 'Civil', 'Chemical', 'Other'] },
+        { id: 'year', type: 'single', label: 'Current year of study', required: true,
+          options: ['1st year', '2nd year', '3rd year', '4th year', 'Passed out (2026)', 'Passed out (2025 or earlier)'] }
+      ] },
+
+    { id: 'intent', weight: 35, section: '03 · Career intent',
+      title: 'What do you want to do right after graduation?', subtitle: '\u201cHaven\u2019t decided yet\u201d is a completely normal answer \u2014 that\u2019s exactly why this exists.',
+      fields: [
+        { id: 'intent', type: 'single', required: true,
+          options: ['Software / IT job', 'Core branch job (mech, civil, electrical)', 'Govt job or PSU', 'Higher studies (MS / M.Tech)', 'GATE preparation', 'Start something of my own', 'Haven\u2019t decided yet'] }
+      ] },
+
+    { id: 'roles', weight: 40, section: '03 · Career intent',
+      title: 'Which roles interest you most?', subtitle: 'Pick up to 3 \u2014 a shortlist tells us far more than ticking everything.',
+      fields: [
+        { id: 'roles', type: 'multi', max: 3, shape: 'square', required: true,
+          options: ['Software Developer (full stack)', 'Data Analyst / Data Scientist', 'AI / ML Engineer', 'DevOps / Cloud Engineer / Cybersecurity', 'Embedded & IoT', 'Product / Business Analyst', 'Not sure yet'] }
+      ] },
+
+    { id: 'outlook', weight: 50, section: '03\u201304 · Career outlook',
+      title: 'Two more about where you\u2019re headed', subtitle: '',
+      fields: [
+        { id: 'familyInTech', type: 'single', label: 'Anyone in your circle already working in tech?', help: 'Totally optional \u2014 just curious how much informal guidance is already around you.',
+          required: false, options: ['Yes, immediate family', 'Yes, relatives or seniors I can ask', 'No one I can ask'] },
+        { id: 'salaryExpectation', type: 'single', label: 'What salary would you expect from your first job?', help: '\u201cNo idea\u201d is a genuinely useful answer \u2014 please don\u2019t just guess.',
+          required: true, options: ['Below \u20b93 LPA', '\u20b93\u20136 LPA', '\u20b96\u201312 LPA', 'Above \u20b912 LPA', 'No idea'] }
+      ] },
+
+    { id: 'aiTools', weight: 65, section: '05 · AI tool awareness',
+      title: 'For each tool, what\u2019s true for you?', subtitle: 'Be honest \u2014 \u201cnever heard of it\u201d is a completely fine answer for most people here.',
+      fields: [ { id: 'aiTools', type: 'gridSingle', required: true, rows: AI_TOOL_ROWS, levels: AI_TOOL_LEVELS } ] },
+
+    { id: 'aiConcepts', weight: 80, section: '05 · AI tool awareness',
+      title: 'How well do you understand each of these?', subtitle: '1 = never heard of it, 5 = you could explain it to someone else. Low numbers are fine \u2014 that\u2019s the whole point of asking.',
+      fields: [ { id: 'aiConcepts', type: 'gridRate', required: true, rows: AI_CONCEPT_ROWS, levels: RATE_LEVELS } ] },
+
+    { id: 'foundationSkills', weight: 95, section: '06 · Foundation skills',
+      title: 'And how about these foundation skills?', subtitle: 'This just helps us route you to the right starting point \u2014 not to judge you.',
+      fields: [ { id: 'foundationSkills', type: 'gridRate', required: false, rows: SKILL_ROWS, levels: RATE_LEVELS } ] },
+
+    { id: 'trackRecord', weight: 98, section: '06 · Foundation skills',
+      title: 'Your track record so far', subtitle: '',
+      fields: [
+        { id: 'github', type: 'single', label: 'Do you have a GitHub profile?', required: true,
+          options: ['Yes, with 3 or more of my own projects', 'Yes, but it\u2019s mostly empty', 'Yes, only college assignments are on it', 'No \u2014 what\u2019s GitHub?'] },
+        { id: 'deployed', type: 'single', label: 'Ever put something online a stranger could open in a browser?', required: true,
+          options: ['Yes, I can share a live link', 'I built it but never deployed it', 'Only ran it on my own laptop', 'No, never built anything'] }
+      ] },
+
+    { id: 'webinar', weight: 100, section: '09 · Free live session',
+      title: 'Last one \u2014 save your seat', subtitle: 'Free, no strings attached.',
+      fields: [
+        { id: 'webinarSession', type: 'single', label: 'Which live session interests you most?', required: true,
+          options: ['Python from absolute zero', 'Build your first AI app in 2 hours', 'Using AI for resume and interview prep', 'Data analytics with AI tools', 'Building AI agents', 'How AI is changing campus placements'] },
+        { id: 'webinarSlots', type: 'multi', label: 'Which slot(s) work for you?', help: 'Pick as many as suit you \u2014 we\u2019ll send the recording either way.', min: 1, required: true,
+          options: [fmtDate(upcomingSat) + ' \u00b7 11:00 AM', fmtDate(upcomingSat) + ' \u00b7 5:00 PM', fmtDate(upcomingSun) + ' \u00b7 11:00 AM', 'Just send me the recording'] }
+      ] }
+  ];
+
+  // Encouraging nudges shown briefly after leaving a given screen —
+  // not on every step (that would get old fast), just at a few natural
+  // pace-check points.
+  var MILESTONES = {
+    aboutYou: 'Nice \u2014 first section down.',
+    roles: 'You\u2019re about a third of the way through.',
+    aiTools: 'Past the halfway mark. This is the part that makes the recommendation actually useful.',
+    foundationSkills: 'Almost there \u2014 just your track record and picking a session left.'
+  };
+
+  /* ============================================================
+     2. STATE + DRAFT PERSISTENCE (save-as-you-go, on-device only)
+     ============================================================ */
+  var answers = {};
+  var stepIndex = -1; // -1 = intro, STEPS.length = outro
+  var isSubmitting = false;
+  var lastDirection = 'fwd';
+  var renderedAt = Date.now();
+  var params = new URLSearchParams(location.search);
+  var incomingPath = params.get('path') || '';
+
+  var DRAFT_KEY = 'trivo-students-questionnaire-draft-v2';
+  var QUEUE_KEY = 'trivo-students-questionnaire-queue-v1';
+  var resumedFromDraft = false;
+
+  function saveDraft() {
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ answers: answers, stepIndex: stepIndex, savedAt: Date.now() }));
+    } catch (e) { /* private browsing / storage full — fail silently, in-memory state still works for this session */ }
+  }
+  function loadDraft() {
+    try {
+      var raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (!d || typeof d !== 'object' || !d.answers) return;
+      answers = d.answers;
+      var idx = d.stepIndex;
+      // Only trust a saved position that's a real, in-range, in-progress
+      // step (0..STEPS.length-1). A completed run clears its own draft on
+      // submit, so an out-of-range value here means corrupt/old data —
+      // safest fallback is the intro screen, never a crash.
+      if (typeof idx === 'number' && idx >= 0 && idx < STEPS.length) {
+        stepIndex = idx;
+        resumedFromDraft = true;
+      } else {
+        stepIndex = -1;
+      }
+    } catch (e) { /* corrupt draft — ignore it, start fresh */ }
+  }
+  function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
+
+  var stage = document.getElementById('qzStage');
+  var actions = document.getElementById('qzActions');
+  var backBtn = document.getElementById('qzBack');
+  var nextBtn = document.getElementById('qzNext');
+  var progressFill = document.getElementById('qzProgressFill');
+  var resumeSlot = document.getElementById('qzResumeSlot');
+  var toastWrap = document.getElementById('qzToastWrap');
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function setProgress(pct) { progressFill.style.width = Math.max(0, Math.min(100, pct)) + '%'; }
+
+  function showToast(message, actionLabel, actionFn, duration) {
+    var el = document.createElement('div');
+    el.className = 'qz-toast pointer-events-auto max-w-[480px] w-full bg-bg-raised border border-accent-2 text-fg text-xs px-4 py-3 rounded-xl shadow-[0_12px_28px_-10px_rgba(0,0,0,0.5)] flex items-center justify-between gap-4';
+    el.innerHTML = '<span>' + esc(message) + '</span>' + (actionLabel ? '<button type="button" class="bg-transparent border-0 text-accent-2 font-semibold text-xs cursor-pointer whitespace-nowrap">' + esc(actionLabel) + '</button>' : '');
+    toastWrap.innerHTML = '';
+    toastWrap.appendChild(el);
+    if (actionLabel && actionFn) el.querySelector('button').addEventListener('click', function () { actionFn(); dismiss(); });
+    requestAnimationFrame(function () { el.classList.add('show'); });
+    var timer = setTimeout(dismiss, duration || 3200);
+    function dismiss() {
+      clearTimeout(timer);
+      el.classList.remove('show');
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 350);
+    }
+    return dismiss;
+  }
+
+  function renderResumeBanner() {
+    if (!resumedFromDraft || stepIndex < 0) { resumeSlot.innerHTML = ''; return; }
+    resumeSlot.innerHTML =
+      '<div class="qz-resume-banner max-w-[640px] mx-auto mt-5 px-5 py-3 bg-accent/[0.14] border border-accent rounded-xl text-xs text-fg-muted flex items-center justify-between gap-4">' +
+        '<span>Welcome back \u2014 resuming where you left off.</span>' +
+        '<button type="button" id="qzStartOver" class="bg-transparent border-0 text-accent-2 font-semibold text-xs cursor-pointer">Start over</button>' +
+      '</div>';
+    document.getElementById('qzStartOver').addEventListener('click', function () {
+      if (!confirm('Clear your saved answers and start from question 1?')) return;
+      answers = {};
+      stepIndex = -1;
+      resumedFromDraft = false;
+      clearDraft();
+      render();
+    });
+  }
+
+  /* ============================================================
+     3. RENDERING
+     ============================================================ */
+  function render() {
+    renderResumeBanner();
+    if (stepIndex === -1) return renderIntro();
+    if (stepIndex === STEPS.length) return renderOutro();
+    renderStep(STEPS[stepIndex], true);
+  }
+
+  function renderIntro() {
+    actions.hidden = true;
+    setProgress(0);
+    stage.innerHTML =
+      '<div class="qz-splash qz-step-in-fwd">' +
+        '<p class="qz-splash__kicker">60-second reality check</p>' +
+        '<h1 class="qz-splash__title">Most engineering grads find out where they stand in an interview. You can find out now, for free.</h1>' +
+        '<p class="qz-splash__body">A handful of quick screens about you, your skills, and how much you\u2019ve actually used AI tools \u2014 not how much you\u2019ve heard about them. Answer honestly; there\u2019s no score to fail. Everything you type is saved on this device as you go, so it\u2019s safe to close the tab and finish later.</p>' +
+        '<div class="qz-meta-row">' +
+          '<div><strong>~3 min</strong>to complete</div>' +
+          '<div><strong>10</strong>quick screens</div>' +
+          '<div><strong>0</strong>wrong answers</div>' +
+        '</div>' +
+        '<button type="button" class="qz-btn-next" id="qzStart" style="max-width:320px; margin-inline:auto;">Start <span aria-hidden="true">\u2192</span></button>' +
+      '</div>';
+    document.getElementById('qzStart').addEventListener('click', function () {
+      lastDirection = 'fwd';
+      stepIndex = 0; renderedAt = Date.now(); saveDraft(); render();
+    });
+  }
+
+  // isNav = true only when actually navigating onto this screen (Back /
+  // Continue / initial load). false when we're just re-rendering the same
+  // screen in place to reflect a selection you just made — that re-render
+  // must NOT replay the screen's entrance animation or steal focus back
+  // to the first text field, both of which used to happen on every single
+  // tap because this function didn't distinguish the two cases.
+  function renderStep(step, isNav) {
+    actions.hidden = false;
+    setProgress(stepIndex === 0 ? 0 : STEPS[stepIndex - 1].weight);
+
+    var entranceClass = isNav ? (lastDirection === 'back' ? ' qz-step-in-back' : ' qz-step-in-fwd') : '';
+    var html = '<div class="qz-card' + entranceClass + '">' +
+      '<div class="qz-eyebrow"><span class="qz-eyebrow__num">' + (stepIndex + 1) + ' / ' + STEPS.length + '</span><span class="qz-eyebrow__section">' + esc(step.section) + '</span></div>' +
+      '<div class="qz-alert" id="qzStepAlert"></div>' +
+      '<h2 class="qz-prompt">' + esc(step.title) + '</h2>' +
+      (step.subtitle ? '<p class="qz-help">' + esc(step.subtitle) + '</p>' : '');
+
+    var multiField = step.fields.length > 1;
+    step.fields.forEach(function (field) {
+      if (multiField) html += '<div class="qz-field-group">' + (field.label ? '<div class="qz-field-label">' + esc(field.label) + '</div>' : '') + (field.help ? '<p class="qz-field-help">' + esc(field.help) + '</p>' : '');
+      else if (!multiField && field.label) html += '<div class="qz-field-label" style="margin-top:calc(-1 * var(--s-3));">' + esc(field.label) + '</div>';
+
+      if (field.type === 'text') html += renderTextField(field);
+      else if (field.type === 'single' || field.type === 'multi') html += renderChoiceField(field);
+      else if (field.type === 'gridSingle' || field.type === 'gridRate') html += renderGridField(field);
+
+      if (multiField) html += '</div>';
+    });
+
+    html += '</div>';
+    stage.innerHTML = html;
+    wireStep(step, isNav);
+    backBtn.style.visibility = stepIndex === 0 ? 'hidden' : 'visible';
+    updateNextState(step);
+  }
+
+  function renderTextField(field) {
+    var val = answers[field.id] || '';
+    return '<input class="qz-input" id="f_' + field.id + '" type="' + field.inputType + '" inputmode="' + (field.inputType === 'tel' ? 'numeric' : 'text') + '" autocomplete="' + field.autocomplete + '" placeholder="' + esc(field.placeholder || '') + '" value="' + esc(val) + '" />' +
+      '<p class="qz-field-err" id="err_' + field.id + '">' + esc(field.errMsg || 'This doesn\u2019t look right \u2014 please check it.') + '</p>';
+  }
+
+  function renderChoiceField(field) {
+    var current = answers[field.id];
+    var isMulti = field.type === 'multi';
+    var selectedSet = isMulti ? (current || []) : null;
+    var html = '<div class="qz-options" data-shape="' + (field.shape || 'round') + '">' +
+      field.options.map(function (opt, i) {
+        var selected = isMulti ? selectedSet.indexOf(opt) !== -1 : current === opt;
+        return '<button type="button" class="qz-option' + (selected ? ' is-selected' : '') + '" data-field-id="' + field.id + '" data-opt-index="' + i + '">' +
+          '<span class="qz-option__mark" aria-hidden="true"></span><span>' + esc(opt) + '</span></button>';
+      }).join('') + '</div>';
+    if (field.other) html += '<div class="qz-reveal' + (current === 'Other' ? ' show' : '') + '" id="otherWrap_' + field.id + '"><input class="qz-input" id="otherInput_' + field.id + '" type="text" placeholder="Please type your branch" value="' + esc(answers[field.id + 'Other'] || '') + '" /></div>';
+    if (isMulti && field.max) html += '<p class="qz-inline-note">Pick up to ' + field.max + '.</p>';
+    return html;
+  }
+
+  function renderGridField(field) {
+    var current = answers[field.id] || {};
+    var answeredCount = Object.keys(current).length;
+    return '<p class="qz-grid-progress">' + answeredCount + ' of ' + field.rows.length + ' answered</p>' +
+      '<div class="qz-grid-list">' + field.rows.map(function (row, ri) {
+        var selectedVal = current[row];
+        return '<div class="qz-grid-row">' +
+          '<div class="qz-grid-row__label">' + esc(row) + '</div>' +
+          '<div class="qz-grid-row__opts">' +
+            field.levels.map(function (lvl) {
+              var sel = selectedVal === lvl;
+              return '<button type="button" class="qz-chip' + (sel ? ' is-selected' : '') + '" data-field-id="' + field.id + '" data-row="' + ri + '" data-level="' + esc(lvl) + '">' + esc(lvl) + '</button>';
+            }).join('') +
+          '</div></div>';
+      }).join('') + '</div>';
+  }
+
+  function wireStep(step, isNav) {
+    step.fields.forEach(function (field) {
+      if (field.type === 'text') {
+        var input = document.getElementById('f_' + field.id);
+        input.addEventListener('input', function () {
+          answers[field.id] = input.value;
+          hideFieldErr(field.id);
+          updateNextState(step);
+          saveDraft();
+        });
+      } else if (field.type === 'single' || field.type === 'multi') {
+        stage.querySelectorAll('.qz-option[data-field-id="' + field.id + '"]').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            if (isSubmitting) return;
+            var opt = field.options[Number(btn.dataset.optIndex)];
+            if (field.type === 'single') {
+              answers[field.id] = opt;
+            } else {
+              var list = answers[field.id] ? answers[field.id].slice() : [];
+              var idx = list.indexOf(opt);
+              if (idx !== -1) { list.splice(idx, 1); }
+              else {
+                if (field.max && list.length >= field.max) return; // cap reached, ignore extra taps
+                list.push(opt);
+              }
+              answers[field.id] = list;
+            }
+            renderStep(step, false); // re-render this screen to reflect the new selection state — NOT a navigation, so no entrance animation / no refocus
+            saveDraft();
+            // Animate ONLY the pill that was just tapped, not every already
+            // -selected pill on the screen (that was the "weird" jittery
+            // animation — a full re-render used to replay the pop on all
+            // of them at once).
+            var justTapped = stage.querySelector('.qz-option[data-field-id="' + field.id + '"][data-opt-index="' + btn.dataset.optIndex + '"]');
+            if (justTapped) {
+              justTapped.classList.add('qz-just-picked');
+              setTimeout(function () { justTapped.classList.remove('qz-just-picked'); }, 200);
+            }
+            if (field.other && opt === 'Other') {
+              var freshOtherInput = document.getElementById('otherInput_' + field.id);
+              if (freshOtherInput) setTimeout(function () { freshOtherInput.focus(); }, 60);
+            }
+          });
+        });
+        if (field.other) {
+          var otherInput = document.getElementById('otherInput_' + field.id);
+          if (otherInput) otherInput.addEventListener('input', function () {
+            answers[field.id + 'Other'] = otherInput.value;
+            updateNextState(step);
+            saveDraft();
+          });
+        }
+      } else if (field.type === 'gridSingle' || field.type === 'gridRate') {
+        stage.querySelectorAll('.qz-chip[data-field-id="' + field.id + '"]').forEach(function (chip) {
+          chip.addEventListener('click', function () {
+            if (isSubmitting) return;
+            var row = field.rows[Number(chip.dataset.row)];
+            answers[field.id] = answers[field.id] || {};
+            answers[field.id][row] = chip.dataset.level;
+            renderStep(step, false);
+            saveDraft();
+            var justTappedChip = stage.querySelector('.qz-chip[data-field-id="' + field.id + '"][data-row="' + chip.dataset.row + '"][data-level="' + chip.dataset.level + '"]');
+            if (justTappedChip) {
+              justTappedChip.classList.add('qz-just-picked');
+              setTimeout(function () { justTappedChip.classList.remove('qz-just-picked'); }, 200);
+            }
+          });
+        });
+      }
+    });
+    // Focus the first text field on the screen, for fast keyboard entry —
+    // but only when actually navigating onto this screen. Doing this on
+    // every re-render (including the ones triggered by picking an option
+    // elsewhere on the same screen) was the bug: selecting, say, "year"
+    // at the bottom of a screen would silently steal focus back up to the
+    // "college name" field at the top, which looked like the form was
+    // randomly jumping backward.
+    if (isNav) {
+      var firstText = step.fields.filter(function (f) { return f.type === 'text'; })[0];
+      if (firstText) { var el = document.getElementById('f_' + firstText.id); if (el) setTimeout(function () { el.focus(); }, 50); }
+    }
+  }
+
+  function hideFieldErr(fieldId) {
+    var err = document.getElementById('err_' + fieldId);
+    if (err) err.classList.remove('show');
+  }
+
+  function fieldIsValid(field) {
+    if (!field.required) return true;
+    if (field.type === 'text') {
+      var v = (answers[field.id] || '').trim();
+      if (!v) return false;
+      if (field.pattern && !(new RegExp(field.pattern)).test(v)) return false;
+      return true;
+    }
+    if (field.type === 'single') {
+      var val = answers[field.id];
+      if (!val) return false;
+      if (field.other && val === 'Other') return !!(answers[field.id + 'Other'] || '').trim();
+      return true;
+    }
+    if (field.type === 'multi') {
+      var list = answers[field.id] || [];
+      return list.length >= (field.min || 1);
+    }
+    if (field.type === 'gridSingle' || field.type === 'gridRate') {
+      var g = answers[field.id] || {};
+      return Object.keys(g).length >= field.rows.length;
+    }
+    return true;
+  }
+
+  function stepIsValid(step) { return step.fields.every(fieldIsValid); }
+
+  function updateNextState(step) {
+    nextBtn.disabled = !stepIsValid(step);
+    nextBtn.innerHTML = stepIndex === STEPS.length - 1 ? 'Submit <span aria-hidden="true">\u2713</span>' : 'Continue <span aria-hidden="true">\u2192</span>';
+  }
+
+  /* ============================================================
+     4. NAVIGATION
+     ============================================================ */
+  backBtn.addEventListener('click', function () {
+    if (isSubmitting) return;
+    lastDirection = 'back';
+    if (stepIndex <= 0) { stepIndex = -1; } else { stepIndex--; }
+    saveDraft();
+    render();
+    window.scrollTo({ top: 0 });
+  });
+
+  nextBtn.addEventListener('click', function () {
+    if (isSubmitting) return;
+    var step = STEPS[stepIndex];
+    var firstInvalidText = null;
+    step.fields.forEach(function (field) {
+      if (field.type === 'text' && field.required) {
+        var v = (answers[field.id] || '').trim();
+        var ok = v && (!field.pattern || (new RegExp(field.pattern)).test(v));
+        if (!ok) {
+          var err = document.getElementById('err_' + field.id);
+          if (err) err.classList.add('show');
+          if (!firstInvalidText) firstInvalidText = field.id;
+        }
+      }
+    });
+    if (firstInvalidText) {
+      var el = document.getElementById('f_' + firstInvalidText);
+      if (el) el.focus();
+      return;
+    }
+    if (!stepIsValid(step)) return;
+
+    if (stepIndex === STEPS.length - 1) {
+      submitForm();
+      return;
     }
 
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      errBox.style.display = 'none';
-      var fd = new FormData(form);
-      var payload = {
-        name: fd.get('name'),
-        email: fd.get('email'),
-        phone: fd.get('phone'),
-        college: fd.get('college'),
-        path: fd.get('path'),
-        message: fd.get('message'),
-        'company-website': fd.get('company-website'),
-        'form-rendered-at': Number(form.dataset.renderedAt)
-      };
-      var btn = form.querySelector('button[type="submit"]');
-      btn.disabled = true;
-      btn.textContent = 'Sending…';
+    var justFinishedId = step.id;
+    lastDirection = 'fwd';
+    stepIndex++;
+    saveDraft();
+    render();
+    window.scrollTo({ top: 0 });
+    if (MILESTONES[justFinishedId]) showToast(MILESTONES[justFinishedId]);
+  });
 
-      fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).then(function (res) {
-        if (!res.ok) return res.json().then(function (d) { throw new Error(d.error || 'Failed'); });
-        return res.json();
-      }).then(function () {
-        form.hidden = true;
-        thankyou.hidden = false;
-      }).catch(function (err) {
-        errBox.textContent = err.message && err.message.indexOf('Too many') !== -1
-          ? err.message
-          : "That didn't go through. Please try again, or email students@trivoailabs.com directly.";
-        errBox.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'Register now';
-      });
+  /* ============================================================
+     5. SUBMIT
+     ============================================================ */
+  function buildPayload() {
+    var branch = answers.branch === 'Other' ? (answers.branchOther || 'Other') : answers.branch;
+    return {
+      name: answers.name || '',
+      whatsapp: answers.whatsapp || '',
+      email: answers.email || '',
+      college: answers.college || '',
+      branch: branch || '',
+      year: answers.year || '',
+      intent: answers.intent || '',
+      roles: answers.roles || [],
+      familyInTech: answers.familyInTech || '',
+      salaryExpectation: answers.salaryExpectation || '',
+      aiTools: answers.aiTools || {},
+      aiConcepts: answers.aiConcepts || {},
+      foundationSkills: answers.foundationSkills || {},
+      github: answers.github || '',
+      deployed: answers.deployed || '',
+      webinarSession: answers.webinarSession || '',
+      webinarSlots: answers.webinarSlots || [],
+      landingQuizPath: incomingPath || undefined,
+      'company-website': '',
+      'form-rendered-at': renderedAt
+    };
+  }
+
+  function submitForm() {
+    isSubmitting = true;
+    nextBtn.disabled = true;
+    nextBtn.innerHTML = '<span class="qz-spinner" aria-hidden="true"></span> Sending\u2026';
+    backBtn.style.visibility = 'hidden';
+
+    var payload = buildPayload();
+    var controller = ('AbortController' in window) ? new AbortController() : null;
+    var timeoutId = controller ? setTimeout(function () { controller.abort(); }, 12000) : null;
+
+    fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller ? controller.signal : undefined
+    }).then(function (res) {
+      if (timeoutId) clearTimeout(timeoutId);
+      if (!res.ok) return res.json().catch(function () { return {}; }).then(function (d) { throw new Error(d.error || ('Server returned ' + res.status)); });
+      return res.json().catch(function () { return {}; });
+    }).then(function () {
+      isSubmitting = false;
+      clearDraft();
+      lastDirection = 'fwd';
+      stepIndex = STEPS.length;
+      render();
+    }).catch(function (err) {
+      if (timeoutId) clearTimeout(timeoutId);
+      isSubmitting = false;
+      handleSubmitFailure(err, payload);
     });
-  })();
+  }
+
+  function handleSubmitFailure(err, payload) {
+    // Never silently claim success. Also never silently lose the answers:
+    // stash them so a retry (or a page reload) can resend automatically.
+    // (Note: the on-device *draft* — every keystroke — is already saved
+    // separately via saveDraft(); this queue is specifically for a
+    // completed, submitted-but-not-yet-accepted attempt.)
+    try {
+      var queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+      queue.push({ payload: payload, savedAt: Date.now() });
+      localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    } catch (e) {}
+
+    backBtn.style.visibility = 'visible';
+    nextBtn.disabled = false;
+    nextBtn.innerHTML = 'Try again <span aria-hidden="true">\u2192</span>';
+
+    var alertBox = document.getElementById('qzStepAlert');
+    if (alertBox) {
+      var msg = (err && err.message && err.message.indexOf('Too many') !== -1)
+        ? err.message
+        : 'That didn\u2019t go through. Your answers are saved on this device \u2014 tap the button to try again, or email <a href="mailto:students@trivoailabs.com">students@trivoailabs.com</a> and we\u2019ll sort it out manually.';
+      alertBox.innerHTML = msg;
+      alertBox.classList.add('show');
+    }
+  }
+
+  // If a previous visit left a queued *submitted* attempt that never went
+  // through (offline, server hiccup, etc.), retry it quietly in the
+  // background before rendering — separate from the in-progress draft.
+  function flushQueue() {
+    var queue;
+    try { queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch (e) { queue = []; }
+    if (!queue.length) return;
+    var remaining = queue.slice();
+    function tryNext() {
+      if (!remaining.length) { localStorage.removeItem(QUEUE_KEY); return; }
+      var item = remaining[0];
+      fetch('/api/register', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item.payload)
+      }).then(function (res) {
+        if (!res.ok) throw new Error('retry failed');
+        remaining.shift();
+        localStorage.setItem(QUEUE_KEY, JSON.stringify(remaining));
+        tryNext();
+      }).catch(function () { /* still failing — leave queued, try again next visit */ });
+    }
+    tryNext();
+  }
+
+  /* ============================================================
+     6. RECOMMENDATION + OUTRO
+     ============================================================ */
+  function scoreLevel(value) {
+    var n = Number(value);
+    return isFinite(n) && value !== 'Never used it' ? n : 0;
+  }
+  function avgOf(gridAnswers) {
+    var vals = Object.keys(gridAnswers || {}).map(function (k) { return scoreLevel(gridAnswers[k]); });
+    if (!vals.length) return 0;
+    return vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+  }
+
+  function computeRecommendation() {
+    var skillsAvg = avgOf(answers.foundationSkills);
+    var conceptsAvg = avgOf(answers.aiConcepts);
+    var score = (skillsAvg / 5) * 4 + (conceptsAvg / 5) * 4;
+    if (answers.github === 'Yes, with 3 or more of my own projects') score += 1.5;
+    else if (answers.github && answers.github.indexOf('Yes') === 0) score += 0.5;
+    if (answers.deployed === 'Yes, I can share a live link') score += 1.5;
+    else if (answers.deployed === 'I built it but never deployed it') score += 0.5;
+
+    if (score >= 6.5) return { title: 'Ready to go deep', body: 'Your foundations are solid \u2014 agents, evaluation, and building with real APIs is the right next step, not another "intro to Python."' };
+    if (score >= 3) return { title: 'Ready to build real projects', body: 'You\u2019ve got a base to work from. The fastest path from here is shipping small, real projects \u2014 not more theory.' };
+    return { title: 'Just starting out \u2014 and that\u2019s fine', body: 'Everyone starts somewhere. A structured, zero-assumptions track will get you to your first working project fast.' };
+  }
+
+  function renderOutro() {
+    actions.hidden = true;
+    setProgress(100);
+    var rec = computeRecommendation();
+    var slotList = (answers.webinarSlots || []).join(', ') || '\u2014';
+    stage.innerHTML =
+      '<div class="qz-splash qz-step-in-fwd">' +
+        '<svg class="qz-checkmark" viewBox="0 0 80 80" aria-hidden="true">' +
+          '<circle cx="40" cy="40" r="35" />' +
+          '<path d="M24 41 L35 52 L57 28" />' +
+        '</svg>' +
+        '<p class="qz-splash__kicker">You\u2019re in</p>' +
+        '<h1 class="qz-splash__title">Thanks, ' + esc((answers.name || '').split(' ')[0] || 'there') + ' \u2014 that took guts to answer honestly.</h1>' +
+        '<p class="qz-splash__body">Based on what you told us, here\u2019s where we\u2019d start you:</p>' +
+        '<div class="qz-track-badge">' + esc(rec.title) + '</div>' +
+        '<p class="qz-splash__body">' + esc(rec.body) + '</p>' +
+        '<ul class="qz-summary-list">' +
+          '<li><span>Live session</span><span>' + esc(answers.webinarSession || '\u2014') + '</span></li>' +
+          '<li><span>Slot(s)</span><span>' + esc(slotList) + '</span></li>' +
+          '<li><span>We\u2019ll reach you at</span><span>' + esc(answers.whatsapp || answers.email || '\u2014') + '</span></li>' +
+        '</ul>' +
+        '<p class="qz-splash__body" style="margin-bottom: var(--s-6);">We\u2019ll follow up on WhatsApp with your session link and a personalised recommendation. No spam \u2014 just what you signed up for.</p>' +
+        '<a class="btn btn--primary" href="index.html">Back to home</a>' +
+      '</div>';
+  }
+
+  /* ============================================================
+     7. BOOT
+     ============================================================ */
+  loadDraft();
+  flushQueue();
+  render();
+})();
 </script>
 </body>
 </html>

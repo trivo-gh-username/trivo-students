@@ -5,7 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Admin — Trivo Student Programs</title>
 <meta name="robots" content="noindex, nofollow" />
+<!-- Tailwind (Play CDN) — same setup as the rest of the site; deferred
+     and guarded so it can never block or break this page if the CDN is
+     unreachable, and preflight is off so it can't touch the styles
+     below. -->
+<script src="https://cdn.tailwindcss.com" defer></script>
+<script>
+  window.addEventListener('DOMContentLoaded', function () {
+    if (!window.tailwind) return;
+    tailwind.config = {
+      corePlugins: { preflight: false },
+      theme: {
+        extend: {
+          colors: {
+            bg: '#0a0a0f', 'bg-card': '#15151f', 'bg-raised': '#111118',
+            line: '#26262f', 'line-strong': '#34343f',
+            fg: '#f5f5f7', 'fg-muted': '#a8a8b8', 'fg-subtle': '#6f6f80',
+            accent: '#7c5cff', 'accent-2': '#40e0d0'
+          }
+        }
+      }
+    };
+  });
+</script>
 <style>
+
   :root {
     --bg: #0a0a0f; --bg-card: #15151f; --line: #26262f; --line-strong: #34343f;
     --fg: #f5f5f7; --fg-muted: #a8a8b8; --accent: #7c5cff; --accent-fg: #fff;
@@ -106,16 +130,48 @@
   </div>
 
   <div class="panel" id="panel-registrations">
+    <div id="regsInsights" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
+
     <div class="card">
-      <div class="row" style="justify-content: space-between; margin-bottom: 1rem;">
+      <div class="row" style="justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
         <strong>Registrations</strong>
-        <button id="btnRefreshRegs">Refresh</button>
+        <div class="flex flex-wrap gap-2 items-center">
+          <input id="regsSearch" type="text" placeholder="Search name, email, college, branch…" class="w-60 mb-0" />
+          <select id="regsStatusFilter" class="w-40 mb-0">
+            <option value="">All statuses</option>
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="enrolled">Enrolled</option>
+            <option value="not_interested">Not interested</option>
+            <option value="flagged">Flagged</option>
+          </select>
+          <button id="btnExportCsv">Export CSV</button>
+          <button id="btnRefreshRegs">Refresh</button>
+        </div>
       </div>
-      <table>
-        <thead><tr><th>When</th><th>Name</th><th>Email</th><th>Path</th><th>Status</th><th></th></tr></thead>
-        <tbody id="regsBody"></tbody>
-      </table>
+      <p class="muted" id="regsSummary" style="margin-top:0;"></p>
+      <div class="overflow-x-auto">
+        <table>
+          <thead><tr><th>When</th><th>Name</th><th>Contact</th><th>Branch / year</th><th>Interest</th><th>Status</th><th></th></tr></thead>
+          <tbody id="regsBody"></tbody>
+        </table>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- Registration detail panel — replaces the old raw alert(JSON.stringify(...))
+     dump with an actually readable, sectioned view. Hidden/shown by
+     toggling Tailwind's `hidden` utility (works regardless of the
+     preflight:false setting — that only disables Tailwind's base-style
+     reset, not its regular utility classes). -->
+<div id="regModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 p-4">
+  <div class="bg-bg-card border border-line-strong rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6">
+    <div class="flex justify-between items-start mb-4 gap-4">
+      <h3 id="regModalTitle" class="text-lg font-semibold m-0 text-fg"></h3>
+      <button id="regModalClose">Close</button>
+    </div>
+    <div id="regModalBody" class="grid gap-4"></div>
   </div>
 </div>
 
@@ -267,30 +323,220 @@
     }).catch(function (err) { toast('Save failed: ' + err.message); });
   });
 
+  // The registration form has changed shape over time (see README — the
+  // `data` column is deliberately schema-less on purpose), so everything
+  // below reads defensively across both the old short form (name/email/
+  // phone/college/path/message) and the new multi-step questionnaire
+  // (whatsapp/branch/year/intent/roles/aiTools/etc).
+  var STATUS_OPTIONS = ['new', 'contacted', 'enrolled', 'not_interested', 'flagged'];
+  var STATUS_LABELS = { new: 'New', contacted: 'Contacted', enrolled: 'Enrolled', not_interested: 'Not interested', flagged: 'Flagged' };
+  var allRegRows = [];
+
   function loadRegistrations() {
     api('GET', 'registrations').then(function (res) {
-      var body = document.getElementById('regsBody');
-      body.innerHTML = (res.rows || []).map(function (r) {
-        var d = r.data || {};
-        var when = new Date(r.created_at).toLocaleString();
-        return '<tr>' +
-          '<td>' + when + '</td>' +
-          '<td>' + escapeHtml(d.name || '') + '</td>' +
-          '<td>' + escapeHtml(d.email || '') + '<br><span class="muted">' + escapeHtml(d.phone || '') + '</span></td>' +
-          '<td>' + escapeHtml(d.path || d.college || '') + '</td>' +
-          '<td><span class="status-pill">' + escapeHtml(r.status) + '</span></td>' +
-          '<td><button class="danger" data-del="' + r.id + '">Delete</button></td>' +
-          '</tr>';
-      }).join('') || '<tr><td colspan="6" class="muted">No registrations yet.</td></tr>';
-      body.querySelectorAll('[data-del]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          if (!confirm('Delete this registration?')) return;
-          api('DELETE', 'registrations/' + btn.dataset.del).then(loadRegistrations);
+      allRegRows = res.rows || [];
+      renderInsights(allRegRows);
+      applyRegFilters();
+    });
+  }
+
+  function topPick(rows, getter) {
+    var counts = {};
+    rows.forEach(function (r) { var v = getter(r.data || {}); if (v) counts[v] = (counts[v] || 0) + 1; });
+    var best = null, bestN = 0;
+    Object.keys(counts).forEach(function (k) { if (counts[k] > bestN) { best = k; bestN = counts[k]; } });
+    return best ? (best + ' (' + bestN + ')') : '\u2014';
+  }
+
+  function renderInsights(rows) {
+    var total = rows.length;
+    var flagged = rows.filter(function (r) { return r.status === 'flagged'; }).length;
+    var awaiting = rows.filter(function (r) { return r.status === 'new'; }).length;
+    var todayStr = new Date().toDateString();
+    var today = rows.filter(function (r) { return new Date(r.created_at).toDateString() === todayStr; }).length;
+
+    var statCards = [
+      ['Total registrations', total],
+      ['New today', today],
+      ['Awaiting follow-up', awaiting],
+      ['Flagged (spam/bot)', flagged]
+    ];
+    var statsHtml = statCards.map(function (c) {
+      return '<div class="bg-bg-card border border-line rounded-2xl p-4">' +
+        '<div class="text-fg-muted text-xs uppercase tracking-wide mb-1">' + escapeHtml(c[0]) + '</div>' +
+        '<div class="text-fg text-xl font-bold">' + escapeHtml(String(c[1])) + '</div>' +
+      '</div>';
+    }).join('');
+
+    var topBranch = topPick(rows, function (d) { return d.branch; });
+    var topIntent = topPick(rows, function (d) { return d.intent; });
+    var topSession = topPick(rows, function (d) { return d.webinarSession; });
+    var topsHtml = '<div class="col-span-2 md:col-span-4 bg-bg-card border border-line rounded-2xl p-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">' +
+      '<div><span class="text-fg-muted">Top branch: </span><span class="text-fg font-semibold">' + escapeHtml(topBranch) + '</span></div>' +
+      '<div><span class="text-fg-muted">Top career intent: </span><span class="text-fg font-semibold">' + escapeHtml(topIntent) + '</span></div>' +
+      '<div><span class="text-fg-muted">Most-picked session: </span><span class="text-fg font-semibold">' + escapeHtml(topSession) + '</span></div>' +
+    '</div>';
+
+    document.getElementById('regsInsights').innerHTML =
+      '<div class="col-span-2 md:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-3">' + statsHtml + '</div>' + topsHtml;
+  }
+
+  function applyRegFilters() {
+    var q = (document.getElementById('regsSearch').value || '').toLowerCase().trim();
+    var statusFilter = document.getElementById('regsStatusFilter').value;
+    var filtered = allRegRows.filter(function (r) {
+      if (statusFilter && r.status !== statusFilter) return false;
+      if (!q) return true;
+      var d = r.data || {};
+      var hay = [d.name, d.email, d.college, d.branch, d.whatsapp, d.phone].filter(Boolean).join(' ').toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+    renderRegTable(filtered);
+    document.getElementById('regsSummary').textContent = filtered.length + ' of ' + allRegRows.length + ' shown';
+  }
+
+  var regsSearchDebounce = null;
+  document.getElementById('regsSearch').addEventListener('input', function () {
+    clearTimeout(regsSearchDebounce);
+    regsSearchDebounce = setTimeout(applyRegFilters, 150);
+  });
+  document.getElementById('regsStatusFilter').addEventListener('change', applyRegFilters);
+
+  function renderRegTable(rows) {
+    var body = document.getElementById('regsBody');
+    body.innerHTML = rows.map(function (r) {
+      var d = r.data || {};
+      var when = new Date(r.created_at).toLocaleString();
+      var contact = escapeHtml(d.email || '') + '<br><span class="muted">' + escapeHtml(d.whatsapp || d.phone || '') + '</span>';
+      var branchYear = [d.branch, d.year].filter(Boolean).map(escapeHtml).join('<br>') || escapeHtml(d.college || '');
+      var interest = escapeHtml(d.intent || d.path || (Array.isArray(d.roles) ? d.roles.join(', ') : '') || '');
+      var statusSelect = '<select data-status-for="' + r.id + '" class="mb-0 py-1 text-xs w-full">' + STATUS_OPTIONS.map(function (s) {
+        return '<option value="' + s + '"' + (r.status === s ? ' selected' : '') + '>' + STATUS_LABELS[s] + '</option>';
+      }).join('') + '</select>';
+      return '<tr>' +
+        '<td>' + when + '</td>' +
+        '<td>' + escapeHtml(d.name || '') + '</td>' +
+        '<td>' + contact + '</td>' +
+        '<td>' + branchYear + '</td>' +
+        '<td>' + interest + '</td>' +
+        '<td style="min-width:9rem;">' + statusSelect + '</td>' +
+        '<td class="row" style="gap:0.4rem; flex-wrap:nowrap;">' +
+          '<button data-view="' + r.id + '">View</button>' +
+          '<button class="danger" data-del="' + r.id + '">Delete</button>' +
+        '</td>' +
+        '</tr>';
+    }).join('') || '<tr><td colspan="7" class="muted">No registrations match.</td></tr>';
+
+    body.querySelectorAll('[data-status-for]').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var id = sel.dataset.statusFor;
+        var newStatus = sel.value;
+        var previous = (allRegRows.find(function (x) { return x.id === id; }) || {}).status;
+        api('PATCH', 'registrations/' + id, { status: newStatus }).then(function () {
+          var row = allRegRows.find(function (x) { return x.id === id; });
+          if (row) row.status = newStatus;
+          toast('Status updated to \u201c' + STATUS_LABELS[newStatus] + '\u201d');
+          renderInsights(allRegRows);
+        }).catch(function (err) {
+          sel.value = previous; // revert the dropdown — the change never actually saved
+          toast('Update failed: ' + err.message);
         });
+      });
+    });
+    body.querySelectorAll('[data-del]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (!confirm('Delete this registration?')) return;
+        api('DELETE', 'registrations/' + btn.dataset.del).then(loadRegistrations);
+      });
+    });
+    body.querySelectorAll('[data-view]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var r = allRegRows.find(function (x) { return x.id === btn.dataset.view; });
+        if (r) openRegModal(r);
       });
     });
   }
   document.getElementById('btnRefreshRegs').addEventListener('click', loadRegistrations);
+
+  // Detail view — a readable, sectioned breakdown instead of a raw
+  // alert(JSON.stringify(...)) dump. Any field not present in a given
+  // submission is simply omitted rather than shown as blank/undefined.
+  function fieldRow(label, value) {
+    if (value === undefined || value === null || value === '' || (Array.isArray(value) && !value.length)) return '';
+    var display = Array.isArray(value) ? value.join(', ') : String(value);
+    return '<div class="flex justify-between gap-4 text-sm border-b border-line pb-2"><span class="text-fg-muted">' + escapeHtml(label) + '</span><span class="text-fg font-medium text-right">' + escapeHtml(display) + '</span></div>';
+  }
+  function gridSection(title, gridObj) {
+    if (!gridObj || !Object.keys(gridObj).length) return '';
+    var rows = Object.keys(gridObj).map(function (k) { return fieldRow(k, gridObj[k]); }).join('');
+    return '<div><h4 class="text-fg font-semibold text-sm mb-2">' + escapeHtml(title) + '</h4><div class="grid gap-1">' + rows + '</div></div>';
+  }
+  function plainSection(title, rowsHtml) {
+    if (!rowsHtml.replace(/\s/g, '')) return '';
+    return '<div><h4 class="text-fg font-semibold text-sm mb-2">' + escapeHtml(title) + '</h4><div class="grid gap-1">' + rowsHtml + '</div></div>';
+  }
+
+  function openRegModal(r) {
+    var d = r.data || {};
+    document.getElementById('regModalTitle').textContent = (d.name || 'Registration') + ' \u2014 ' + new Date(r.created_at).toLocaleString();
+    var body =
+      plainSection('Identity & contact', fieldRow('Name', d.name) + fieldRow('Email', d.email) + fieldRow('WhatsApp / phone', d.whatsapp || d.phone)) +
+      plainSection('Academic', fieldRow('College', d.college) + fieldRow('Branch', d.branch) + fieldRow('Year', d.year)) +
+      plainSection('Career', fieldRow('Intent', d.intent) + fieldRow('Roles', d.roles) + fieldRow('Family in tech', d.familyInTech) + fieldRow('Salary expectation', d.salaryExpectation)) +
+      gridSection('AI tool awareness', d.aiTools) +
+      gridSection('AI concept understanding (1\u20135)', d.aiConcepts) +
+      gridSection('Foundation skills (1\u20135)', d.foundationSkills) +
+      plainSection('Track record', fieldRow('GitHub', d.github) + fieldRow('Deployed something publicly', d.deployed)) +
+      plainSection('Webinar', fieldRow('Session', d.webinarSession) + fieldRow('Slot(s)', d.webinarSlots)) +
+      plainSection('Other', fieldRow('Message', d.message) + fieldRow('Path (from landing quiz)', d.path || d.landingQuizPath));
+    document.getElementById('regModalBody').innerHTML = body || '<p class="muted">No details recorded.</p>';
+    var modal = document.getElementById('regModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+  function closeRegModal() {
+    var modal = document.getElementById('regModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+  document.getElementById('regModalClose').addEventListener('click', closeRegModal);
+  document.getElementById('regModal').addEventListener('click', function (e) { if (e.target.id === 'regModal') closeRegModal(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeRegModal(); });
+
+  // CSV export — respects whatever search/status filter is currently
+  // applied, so "export what I'm looking at" does the intuitive thing.
+  document.getElementById('btnExportCsv').addEventListener('click', function () {
+    var q = (document.getElementById('regsSearch').value || '').toLowerCase().trim();
+    var statusFilter = document.getElementById('regsStatusFilter').value;
+    var rows = allRegRows.filter(function (r) {
+      if (statusFilter && r.status !== statusFilter) return false;
+      if (!q) return true;
+      var d = r.data || {};
+      var hay = [d.name, d.email, d.college, d.branch, d.whatsapp, d.phone].filter(Boolean).join(' ').toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+    var cols = ['created_at', 'status', 'name', 'email', 'whatsapp', 'college', 'branch', 'year', 'intent', 'roles', 'salaryExpectation', 'github', 'deployed', 'webinarSession', 'webinarSlots'];
+    function csvCell(v) {
+      if (v == null) v = '';
+      if (Array.isArray(v)) v = v.join('; ');
+      return '"' + String(v).replace(/"/g, '""') + '"';
+    }
+    var lines = [cols.join(',')];
+    rows.forEach(function (r) {
+      var d = r.data || {};
+      lines.push(cols.map(function (c) {
+        if (c === 'created_at') return csvCell(new Date(r.created_at).toISOString());
+        if (c === 'status') return csvCell(r.status);
+        return csvCell(d[c]);
+      }).join(','));
+    });
+    var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = 'trivo-registrations-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
 
   function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

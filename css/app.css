@@ -45,7 +45,18 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  /* Root cause of the mobile "bleeding": anything wider than the viewport
+     (a fixed-width child, a long unbroken string, a 100vw element next to
+     a scrollbar) used to create horizontal scroll room, so the dark
+     background/glow looked like it "ran off" the right edge as you
+     scrolled sideways. Locking both html and body to the viewport width
+     removes that scroll room outright, on every page, not just the ones
+     we happen to test. */
+  overflow-x: hidden;
+  max-width: 100%;
+}
 body {
   margin: 0;
   background: var(--bg);
@@ -55,12 +66,39 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  max-width: 100%;
+  /* Respect the notch/home-indicator on modern phones so cards and the
+     floating CTA don't sit flush against the physical edge. */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
-img { max-width: 100%; display: block; }
+img, svg, video { max-width: 100%; display: block; }
 a { color: inherit; text-decoration: none; }
 
-.wrap { max-width: 1180px; margin-inline: auto; padding-inline: var(--s-5); }
+/* Any long unbroken token (a long email address, URL, etc. typed into a
+   card) can force its container wider than the screen on mobile — this is
+   the single most common cause of an individual element "bleeding" past
+   the edge. Belt-and-braces default, cards below can override. */
+.form-card, .stat-card, .outcome-card, .course-card, .quiz-card, .closing-card {
+  overflow-wrap: anywhere;
+}
+
+.wrap { max-width: 1180px; margin-inline: auto; padding-inline: var(--s-5); width: 100%; }
 @media (min-width: 768px) { .wrap { padding-inline: var(--s-7); } }
+
+/* ── Mobile spacing scale ────────────────────────────────────────────────
+   The token scale (--s-7 / --s-8 / --s-9) was tuned for desktop breathing
+   room — on a 360–400px phone the same values ate 60–80% of the viewport
+   in padding alone, which is what pushed content edge-to-edge and made
+   cards look like they had no margin. Scale it down under 480px. */
+@media (max-width: 480px) {
+  :root {
+    --s-7: 2rem;
+    --s-8: 2.75rem;
+    --s-9: 3.5rem;
+    --t-4xl: 2.75rem;
+  }
+}
 
 h1, h2, h3, h4 {
   font-family: var(--font-display);
@@ -109,7 +147,7 @@ h1, h2, h3, h4 {
   color: #fff;
   box-shadow: 0 8px 24px -8px rgba(124, 92, 255, 0.6);
 }
-.btn--primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px -8px rgba(124, 92, 255, 0.75); }
+.btn--primary:hover { transform: translateY(-1px); box-shadow: 0 10px 26px -8px rgba(124, 92, 255, 0.65); }
 .btn--ghost { background: transparent; border-color: var(--line-strong); color: var(--fg); }
 .btn--ghost:hover { border-color: var(--fg-muted); }
 .btn--sm { padding: 0.6rem 1.1rem; font-size: var(--t-xs); }
@@ -208,7 +246,7 @@ h1, h2, h3, h4 {
   padding: var(--s-6); display: flex; flex-direction: column; gap: var(--s-4);
   transition: transform 0.25s var(--ease), border-color 0.25s var(--ease), background 0.25s var(--ease);
 }
-.course-card:hover { transform: translateY(-4px); border-color: var(--accent); background: var(--bg-card-hover); }
+.course-card:hover { transform: translateY(-2px); border-color: var(--accent); background: var(--bg-card-hover); }
 .course-card__label { font-size: var(--t-xs); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent-2); }
 .course-card__title { font-family: var(--font-display); font-size: var(--t-lg); }
 .course-card__meta { font-size: var(--t-xs); color: var(--fg-subtle); display: flex; gap: var(--s-2); }
@@ -236,7 +274,7 @@ h1, h2, h3, h4 {
   border: 1px solid var(--line); border-radius: var(--r-lg);
   padding: var(--s-8) var(--s-5);
 }
-.closing-card__title { font-size: clamp(1.75rem, 5vw, var(--t-2xl)); max-width: 20ch; margin-inline: auto var(--s-6); }
+.closing-card__title { font-size: clamp(1.75rem, 5vw, var(--t-2xl)); max-width: 20ch; margin-inline: auto; margin-bottom: var(--s-6); }
 
 /* ── Footer ──────────────────────────────────────────────────────────── */
 .footer { border-top: 1px solid var(--line); padding: var(--s-7) 0; position: relative; z-index: 1; }
@@ -252,11 +290,11 @@ h1, h2, h3, h4 {
 }
 .floating-cta.is-visible { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
 .floating-cta__btn {
-  animation: breathe 2.6s ease-in-out infinite;
+  animation: breathe 3.4s ease-in-out infinite;
 }
 @keyframes breathe {
-  0%, 100% { box-shadow: 0 8px 24px -8px rgba(124, 92, 255, 0.6); }
-  50% { box-shadow: 0 8px 36px -4px rgba(124, 92, 255, 0.9); }
+  0%, 100% { box-shadow: 0 8px 24px -8px rgba(124, 92, 255, 0.55); }
+  50% { box-shadow: 0 8px 28px -6px rgba(124, 92, 255, 0.72); }
 }
 @media (prefers-reduced-motion: reduce) {
   .floating-cta__btn { animation: none; }
@@ -264,7 +302,7 @@ h1, h2, h3, h4 {
 }
 
 /* ── Scroll-reveal ───────────────────────────────────────────────────── */
-[data-reveal] { opacity: 0; transform: translateY(20px); transition: opacity 0.6s var(--ease), transform 0.6s var(--ease); }
+[data-reveal] { opacity: 0; transform: translateY(12px); transition: opacity 0.45s var(--ease), transform 0.45s var(--ease); }
 [data-reveal].is-visible { opacity: 1; transform: translateY(0); }
 @media (prefers-reduced-motion: reduce) {
   [data-reveal] { opacity: 1; transform: none; transition: none; }
@@ -272,3 +310,13 @@ h1, h2, h3, h4 {
 
 /* ── Skeleton (no-JS / loading fallback) ────────────────────────────── */
 .is-skeleton { opacity: 0.4; }
+
+/* ── Mobile form-field baseline ──────────────────────────────────────── */
+/* iOS Safari zooms the whole page in on focus for any text input under
+   16px, then snaps back on blur — that sudden zoom/snap is what usually
+   reads as the page "jumping" or "bleeding" on mobile. Applies site-wide
+   to every text input, not just one form, so it can't regress silently
+   the next time a field gets added. */
+@media (max-width: 480px) {
+  input, select, textarea, button { font-size: max(16px, var(--t-sm)); }
+}
