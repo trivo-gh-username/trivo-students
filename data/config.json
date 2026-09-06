@@ -17,10 +17,26 @@
     "kicker": "Why now",
     "title": "The gap is real, and it's closing fast",
     "items": [
-      { "id": "s1", "value": "70%", "label": "of new job postings now mention AI tools or literacy, up from single digits a few years ago" },
-      { "id": "s2", "value": "<15%", "label": "of engineering graduates report hands-on project experience with AI tools before graduating" },
-      { "id": "s3", "value": "3-6 mo", "label": "is roughly how long focused, project-based practice takes to close that gap — not years" },
-      { "id": "s4", "value": "0", "label": "prior coding experience required to start on our foundational tracks" }
+      {
+        "id": "s1",
+        "value": "70%",
+        "label": "of new job postings now mention AI tools or literacy, up from single digits a few years ago"
+      },
+      {
+        "id": "s2",
+        "value": "<15%",
+        "label": "of engineering graduates report hands-on project experience with AI tools before graduating"
+      },
+      {
+        "id": "s3",
+        "value": "3-6 mo",
+        "label": "is roughly how long focused, project-based practice takes to close that gap — not years"
+      },
+      {
+        "id": "s4",
+        "value": "0",
+        "label": "prior coding experience required to start on our foundational tracks"
+      }
     ]
   },
   "outcomes": {
@@ -28,9 +44,21 @@
     "kicker": "What you'll walk away with",
     "title": "Not a certificate. A portfolio.",
     "items": [
-      { "id": "o1", "title": "Real, working projects", "body": "Every track ends with something you built and can explain — not a multiple-choice quiz." },
-      { "id": "o2", "title": "A GitHub you're proud of", "body": "Code, documentation, and a project history an interviewer will actually look at." },
-      { "id": "o3", "title": "Judgment, not just syntax", "body": "You'll know when to use AI tools, when not to, and how to explain the difference." }
+      {
+        "id": "o1",
+        "title": "Real, working projects",
+        "body": "Every track ends with something you built and can explain — not a multiple-choice quiz."
+      },
+      {
+        "id": "o2",
+        "title": "A GitHub you're proud of",
+        "body": "Code, documentation, and a project history an interviewer will actually look at."
+      },
+      {
+        "id": "o3",
+        "title": "Judgment, not just syntax",
+        "body": "You'll know when to use AI tools, when not to, and how to explain the difference."
+      }
     ]
   },
   "howItWorks": {
@@ -38,10 +66,26 @@
     "kicker": "How it works",
     "title": "Four steps, start to portfolio",
     "steps": [
-      { "id": "h1", "title": "Pick a path", "body": "Tell us where you're starting from — we'll recommend a track, not just sell you one." },
-      { "id": "h2", "title": "Learn by building", "body": "Every module is project-first. You build, then we explain the why." },
-      { "id": "h3", "title": "Get real feedback", "body": "On your actual project, not a generic rubric." },
-      { "id": "h4", "title": "Walk away with proof", "body": "A portfolio project and a GitHub history you can point to." }
+      {
+        "id": "h1",
+        "title": "Pick a path",
+        "body": "Tell us where you're starting from — we'll recommend a track, not just sell you one."
+      },
+      {
+        "id": "h2",
+        "title": "Learn by building",
+        "body": "Every module is project-first. You build, then we explain the why."
+      },
+      {
+        "id": "h3",
+        "title": "Get real feedback",
+        "body": "On your actual project, not a generic rubric."
+      },
+      {
+        "id": "h4",
+        "title": "Walk away with proof",
+        "body": "A portfolio project and a GitHub history you can point to."
+      }
     ]
   },
   "quiz": {
@@ -53,34 +97,79 @@
         "id": "q1",
         "prompt": "Have you written code before?",
         "options": [
-          { "id": "q1a", "label": "Never", "weight": "beginner" },
-          { "id": "q1b", "label": "A little, in class", "weight": "some" },
-          { "id": "q1c", "label": "Yes, comfortably", "weight": "advanced" }
+          {
+            "id": "q1a",
+            "label": "Never",
+            "weight": "beginner"
+          },
+          {
+            "id": "q1b",
+            "label": "A little, in class",
+            "weight": "some"
+          },
+          {
+            "id": "q1c",
+            "label": "Yes, comfortably",
+            "weight": "advanced"
+          }
         ]
       },
       {
         "id": "q2",
         "prompt": "What pulls you toward AI?",
         "options": [
-          { "id": "q2a", "label": "Curiosity — I keep hearing about it", "weight": "beginner" },
-          { "id": "q2b", "label": "I want to build something real", "weight": "some" },
-          { "id": "q2c", "label": "I want deep, technical skill", "weight": "advanced" }
+          {
+            "id": "q2a",
+            "label": "Curiosity — I keep hearing about it",
+            "weight": "beginner"
+          },
+          {
+            "id": "q2b",
+            "label": "I want to build something real",
+            "weight": "some"
+          },
+          {
+            "id": "q2c",
+            "label": "I want deep, technical skill",
+            "weight": "advanced"
+          }
         ]
       },
       {
         "id": "q3",
         "prompt": "How much time can you give this per week?",
         "options": [
-          { "id": "q3a", "label": "2-3 hours", "weight": "beginner" },
-          { "id": "q3b", "label": "4-6 hours", "weight": "some" },
-          { "id": "q3c", "label": "6+ hours", "weight": "advanced" }
+          {
+            "id": "q3a",
+            "label": "2-3 hours",
+            "weight": "beginner"
+          },
+          {
+            "id": "q3b",
+            "label": "4-6 hours",
+            "weight": "some"
+          },
+          {
+            "id": "q3c",
+            "label": "6+ hours",
+            "weight": "advanced"
+          }
         ]
       }
     ],
     "results": {
-      "beginner": { "title": "Start with the foundations", "body": "You're closer to ready than you think. A foundational track gets you writing real code and using AI tools productively within weeks." },
-      "some": { "title": "You're ready to build", "body": "You've got enough of a base to start building real projects right away — that's exactly where our project-first tracks begin." },
-      "advanced": { "title": "You're ready to go deep", "body": "You can skip the basics. Our advanced tracks go straight into agentic systems and multi-step AI engineering." }
+      "beginner": {
+        "title": "Start with the foundations",
+        "body": "You're closer to ready than you think. A foundational track gets you writing real code and using AI tools productively within weeks."
+      },
+      "some": {
+        "title": "You're ready to build",
+        "body": "You've got enough of a base to start building real projects right away — that's exactly where our project-first tracks begin."
+      },
+      "advanced": {
+        "title": "You're ready to go deep",
+        "body": "You can skip the basics. Our advanced tracks go straight into agentic systems and multi-step AI engineering."
+      }
     }
   },
   "courses": {
@@ -88,52 +177,149 @@
     "kicker": "Explore",
     "title": "Courses",
     "note": "Full pricing and college-cohort details live on trivoailabs.com — this is what students see.",
+    "fieldVisibility": {
+      "label": true,
+      "duration": true,
+      "hours": true,
+      "hoursBreakdown": true,
+      "tags": true,
+      "description": true,
+      "price": true
+    },
     "items": [
       {
         "id": "c1",
         "name": "AI & Computer Foundations",
         "label": "Starter",
         "duration": "4 weeks",
+        "durationWeeks": 4,
         "hours": 16,
+        "hoursBreakdown": [],
         "description": "No prior coding needed. Start from zero, finish with real comfort using a computer and basic AI tools.",
-        "tags": ["Beginner", "No code required"]
+        "tags": [
+          "Beginner",
+          "No code required"
+        ],
+        "multiTierPricing": false,
+        "prices": [
+          {
+            "id": "p1",
+            "label": "Standard",
+            "value": 2999,
+            "display": ""
+          }
+        ],
+        "contactForPricing": true,
+        "visible": true,
+        "showOnHomepage": true
       },
       {
         "id": "c2",
         "name": "Python Basics",
         "label": "Foundational",
         "duration": "6 weeks",
+        "durationWeeks": 6,
         "hours": 24,
+        "hoursBreakdown": [],
         "description": "Write real Python. Small projects, not just syntax drills.",
-        "tags": ["Beginner", "Python"]
+        "tags": [
+          "Beginner",
+          "Python"
+        ],
+        "multiTierPricing": false,
+        "prices": [
+          {
+            "id": "p1",
+            "label": "Standard",
+            "value": 3999,
+            "display": ""
+          }
+        ],
+        "contactForPricing": true,
+        "visible": true,
+        "showOnHomepage": true
       },
       {
         "id": "c3",
         "name": "Build Your First AI App",
         "label": "Project track",
         "duration": "6 weeks",
+        "durationWeeks": 6,
         "hours": 24,
+        "hoursBreakdown": [],
         "description": "Ship a working AI application end to end, with a GitHub repo you can show.",
-        "tags": ["Intermediate", "LLM APIs"]
+        "tags": [
+          "Intermediate",
+          "LLM APIs"
+        ],
+        "multiTierPricing": false,
+        "prices": [
+          {
+            "id": "p1",
+            "label": "Standard",
+            "value": 5999,
+            "display": ""
+          }
+        ],
+        "contactForPricing": true,
+        "visible": true,
+        "showOnHomepage": true
       },
       {
         "id": "c4",
         "name": "Agents & Multi-Step AI Systems",
         "label": "Advanced",
         "duration": "6 weeks",
+        "durationWeeks": 6,
         "hours": 24,
+        "hoursBreakdown": [],
         "description": "Tool-using agents, orchestration, and the failure cases nobody puts in the tutorial.",
-        "tags": ["Advanced", "Agents"]
+        "tags": [
+          "Advanced",
+          "Agents"
+        ],
+        "multiTierPricing": false,
+        "prices": [
+          {
+            "id": "p1",
+            "label": "Standard",
+            "value": 6999,
+            "display": ""
+          }
+        ],
+        "contactForPricing": true,
+        "visible": true,
+        "showOnHomepage": true
       }
     ]
   },
   "faq": {
     "visible": true,
     "items": [
-      { "id": "f1", "question": "Do I need to know how to code?", "answer": "Not for the foundational tracks. We'll place you based on where you actually are, not where you think you should be.", "visible": true },
-      { "id": "f2", "question": "How much does it cost?", "answer": "Pricing depends on the track — you'll see exact numbers before you commit to anything. Register to get a personalized recommendation and pricing.", "visible": true },
-      { "id": "f3", "question": "How is this different from a generic online course?", "answer": "Every track is project-first — you build real things and get real feedback, not just watch videos and take quizzes.", "visible": true },
-      { "id": "f4", "question": "How much time will this take?", "answer": "Most tracks run 4-6 weeks at a few hours a week. You control the pace within that window.", "visible": true }
+      {
+        "id": "f1",
+        "question": "Do I need to know how to code?",
+        "answer": "Not for the foundational tracks. We'll place you based on where you actually are, not where you think you should be.",
+        "visible": true
+      },
+      {
+        "id": "f2",
+        "question": "How much does it cost?",
+        "answer": "Pricing depends on the track — you'll see exact numbers before you commit to anything. Register to get a personalized recommendation and pricing.",
+        "visible": true
+      },
+      {
+        "id": "f3",
+        "question": "How is this different from a generic online course?",
+        "answer": "Every track is project-first — you build real things and get real feedback, not just watch videos and take quizzes.",
+        "visible": true
+      },
+      {
+        "id": "f4",
+        "question": "How much time will this take?",
+        "answer": "Most tracks run 4-6 weeks at a few hours a week. You control the pace within that window.",
+        "visible": true
+      }
     ]
   },
   "floatingCta": {
@@ -150,10 +336,86 @@
       "How AI is changing campus placements"
     ],
     "slots": [
-      { "id": "slot1", "label": "Sat · 11:00 AM", "date": "" },
-      { "id": "slot2", "label": "Sat · 5:00 PM", "date": "" },
-      { "id": "slot3", "label": "Sun · 11:00 AM", "date": "" },
-      { "id": "recording", "label": "Just send me the recording", "date": "" }
+      {
+        "id": "slot1",
+        "label": "Sat · 11:00 AM",
+        "date": ""
+      },
+      {
+        "id": "slot2",
+        "label": "Sat · 5:00 PM",
+        "date": ""
+      },
+      {
+        "id": "slot3",
+        "label": "Sun · 11:00 AM",
+        "date": ""
+      },
+      {
+        "id": "recording",
+        "label": "Just send me the recording",
+        "date": ""
+      }
+    ]
+  },
+  "paths": {
+    "visible": true,
+    "kicker": "Bundles",
+    "title": "Paths",
+    "note": "A curated sequence of courses, sometimes including ones not listed on their own.",
+    "fieldVisibility": {
+      "label": true,
+      "duration": true,
+      "hours": true,
+      "hoursBreakdown": true,
+      "tags": true,
+      "description": true,
+      "price": true
+    },
+    "items": [
+      {
+        "id": "path1",
+        "name": "Beginner to Builder Track",
+        "label": "Bundle",
+        "description": "The first three courses back to back — for students who want a full runway from zero to a shipped AI project without picking one course at a time.",
+        "tags": [
+          "Beginner",
+          "Python",
+          "LLM APIs"
+        ],
+        "includesCourseIds": [
+          "c1",
+          "c2",
+          "c3"
+        ],
+        "duration": "16 weeks",
+        "durationWeeks": 16,
+        "hours": 64,
+        "hoursBreakdown": [],
+        "multiTierPricing": false,
+        "prices": [
+          {
+            "id": "p1",
+            "label": "Standard",
+            "value": 10999,
+            "display": ""
+          }
+        ],
+        "contactForPricing": true,
+        "visible": true,
+        "showOnHomepage": false
+      }
+    ]
+  },
+  "tags": {
+    "items": [
+      "Advanced",
+      "Agents",
+      "Beginner",
+      "Intermediate",
+      "LLM APIs",
+      "No code required",
+      "Python"
     ]
   }
 }

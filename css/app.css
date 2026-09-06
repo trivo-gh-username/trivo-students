@@ -239,6 +239,7 @@ h1, h2, h3, h4 {
 /* ── Courses (cards, pushed lower on the page) ──────────────────────── */
 .courses-section { padding: var(--s-8) 0; position: relative; z-index: 1; }
 .courses-grid { display: grid; gap: var(--s-5); margin-top: var(--s-7); }
+.muted { color: var(--fg-muted); font-size: var(--t-sm); }
 @media (min-width: 640px) { .courses-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1024px) { .courses-grid { grid-template-columns: repeat(4, 1fr); } }
 .course-card {
@@ -252,6 +253,64 @@ h1, h2, h3, h4 {
 .course-card__meta { font-size: var(--t-xs); color: var(--fg-subtle); display: flex; gap: var(--s-2); }
 .course-card__desc { font-size: var(--t-sm); color: var(--fg-muted); flex: 1; }
 .course-card__tags { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+
+/* ── Courses/Paths catalog: price, hours breakdown, path "includes", and
+      the courses.html filter bar. Extends .course-card rather than
+      replacing it — a "path" is a .course-card.offer-card--path, so all
+      the base spacing/hover/reveal styling above is shared for free. ── */
+.offer-card { position: relative; }
+.offer-card--path { border-color: rgba(64,224,208,0.35); }
+.offer-card__type {
+  position: absolute; top: var(--s-4); right: var(--s-4);
+  font-size: var(--t-xs); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--accent-2); background: rgba(64,224,208,0.1); border: 1px solid rgba(64,224,208,0.3);
+  padding: 0.2rem 0.6rem; border-radius: var(--r-pill);
+}
+.offer-card__includes { font-size: var(--t-xs); color: var(--fg-muted); margin: 0; }
+.offer-card__breakdown, .offer-card__tiers { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s-2); font-size: var(--t-xs); }
+.offer-card__breakdown li, .offer-card__tiers li { display: flex; justify-content: space-between; gap: var(--s-3); color: var(--fg-muted); border-bottom: 1px dashed var(--line); padding-bottom: var(--s-2); }
+.offer-card__price {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--t-lg); color: var(--fg);
+  margin-top: auto; padding-top: var(--s-3);
+}
+.offer-card__price--contact { font-size: var(--t-sm); color: var(--accent-2); font-weight: 600; }
+
+/* ── Filter bar (courses.html) ──────────────────────────────────────── */
+.catalog-filters { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--s-5); margin-top: var(--s-6); display: grid; gap: var(--s-4); }
+.catalog-filters__row { display: flex; gap: var(--s-3); flex-wrap: wrap; align-items: center; }
+.catalog-filters__search {
+  flex: 1 1 240px; min-width: 0; padding: 0.75rem 1rem; border-radius: var(--r-md);
+  border: 1.5px solid var(--line-strong); background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: var(--t-sm);
+}
+.catalog-filters__search:focus { outline: none; border-color: var(--accent-2); }
+.catalog-filters__type { display: flex; gap: var(--s-2); background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 0.25rem; }
+.catalog-type-btn {
+  background: none; border: none; color: var(--fg-muted); font-family: var(--font-body); font-size: var(--t-xs); font-weight: 600;
+  padding: 0.45rem 0.9rem; border-radius: var(--r-pill); cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.catalog-type-btn.is-active { background: var(--accent); color: #fff; }
+.catalog-filters__row--ranges { align-items: flex-end; }
+.catalog-range { display: grid; gap: var(--s-2); }
+.catalog-range label { font-size: var(--t-xs); color: var(--fg-subtle); }
+.catalog-range__inputs { display: flex; align-items: center; gap: var(--s-2); color: var(--fg-subtle); }
+.catalog-range__inputs input {
+  width: 5.5rem; padding: 0.55rem 0.7rem; border-radius: var(--r-sm); border: 1.5px solid var(--line-strong);
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: var(--t-xs);
+}
+.catalog-range__inputs input:focus { outline: none; border-color: var(--accent-2); }
+.catalog-clear-btn {
+  background: none; border: 1px solid var(--line-strong); color: var(--fg-muted); border-radius: var(--r-pill);
+  padding: 0.5rem 1rem; font-family: var(--font-body); font-size: var(--t-xs); cursor: pointer; margin-left: auto;
+}
+.catalog-clear-btn:hover { border-color: var(--accent-2); color: var(--accent-2); }
+.catalog-filters__tags { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+.catalog-tag-chip {
+  background: var(--bg); border: 1.5px solid var(--line-strong); color: var(--fg-muted); border-radius: var(--r-pill);
+  padding: 0.4rem 0.85rem; font-family: var(--font-body); font-size: var(--t-xs); cursor: pointer; transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.catalog-tag-chip.is-active { border-color: var(--accent-2); background: var(--accent-soft); color: var(--fg); }
+.catalog-empty { text-align: center; color: var(--fg-muted); padding: var(--s-8) var(--s-5); }
+.catalog-empty button { background: none; border: none; color: var(--accent-2); text-decoration: underline; cursor: pointer; font-family: var(--font-body); font-size: inherit; }
 .tag-pill { font-size: var(--t-xs); padding: 0.25rem 0.65rem; border-radius: var(--r-pill); background: var(--accent-soft); color: var(--accent-2); }
 
 /* ── FAQ ─────────────────────────────────────────────────────────────── */
