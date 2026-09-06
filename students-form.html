@@ -155,8 +155,18 @@
   .qz-multi-counter strong { color: var(--accent-2); }
 
   /* ── Grid-style questions rendered as stacked rows ───────────── */
-  .qz-grid-list { display: grid; gap: var(--s-5); }
-  .qz-grid-row { border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-4); background: var(--bg-raised); }
+  .qz-grid-list { display: grid; gap: var(--s-5); min-width: 0; }
+  /* `min-width: 0` here is the actual fix, not decoration: a CSS Grid
+     item's default min-width is `auto`, which means it refuses to shrink
+     below the intrinsic width of its content. The AI-tools row below
+     packs 5 unwrapped chips side by side specifically so they can scroll
+     horizontally *within their own row* — but without this, the grid
+     item itself was expanding to fit all 5 chips at once, dragging the
+     whole page 240px wider than the phone's screen on screen 5 (measured
+     with a real headless browser at a 375px viewport: 572px vs 375px).
+     `overflow-x: auto` on the child below only works if this row is
+     first allowed to actually be narrower than its content. */
+  .qz-grid-row { border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-4); background: var(--bg-raised); min-width: 0; }
   .qz-grid-row__label { font-size: var(--t-sm); font-weight: 600; margin-bottom: var(--s-3); }
   /* Single-row, horizontally-scrollable chip strip — used for the AI
      tools grid where each row has 5 short options that should read as
