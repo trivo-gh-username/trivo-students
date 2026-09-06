@@ -139,5 +139,21 @@
   "floatingCta": {
     "visible": true,
     "label": "Register now"
+  },
+  "webinar": {
+    "sessions": [
+      "Python for complete beginners",
+      "Build your first AI app in 2 hours",
+      "Using AI for resume and interview prep",
+      "Data analytics with AI tools",
+      "Building AI agents",
+      "How AI is changing campus placements"
+    ],
+    "slots": [
+      { "id": "slot1", "label": "Sat · 11:00 AM", "date": "" },
+      { "id": "slot2", "label": "Sat · 5:00 PM", "date": "" },
+      { "id": "slot3", "label": "Sun · 11:00 AM", "date": "" },
+      { "id": "recording", "label": "Just send me the recording", "date": "" }
+    ]
   }
 }
