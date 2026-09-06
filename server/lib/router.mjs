@@ -7,10 +7,14 @@
  *   GET    /api/config                public — site content
  *   GET    /api/content               admin — same data, admin-facing name
  *   POST   /api/content               admin — save site content (direct write, no draft/publish — see db.mjs)
- *   POST   /api/register              public — the temporary registration form, rate-limited
+ *   POST   /api/register              public — the registration form, rate-limited
  *   GET    /api/registrations         admin — list
  *   PATCH  /api/registrations/:id     admin — update status/notes
  *   DELETE /api/registrations/:id     admin
+ *   POST   /api/draft-registrations           public — autosave in-progress form state, rate-limited (see db.mjs / ratelimit.mjs)
+ *   GET    /api/draft-registrations           admin — list in-progress/abandoned attempts
+ *   GET    /api/draft-registrations/funnel    admin — aggregate drop-off stats
+ *   DELETE /api/draft-registrations/:id       admin
  */
 import * as db from "./db.mjs";
 import * as auth from "./auth.mjs";
@@ -177,6 +181,9 @@ export async function handleApi(req, res, url) {
         return send(res, 400, { error: "Name and email are required." });
       }
 
+      const clientId = typeof data.clientId === "string" ? data.clientId.slice(0, 128) : "";
+      delete data.clientId;
+
       const created = await db.createRegistration({
         data,
         status: suspicious ? "flagged" : "new",
@@ -186,7 +193,57 @@ export async function handleApi(req, res, url) {
       // submissions.
       if (!suspicious) ratelimit.record(ip);
       await db.logAudit("public", "create", "registration", created.id + (suspicionReason ? ` (flagged: ${suspicionReason})` : ""));
+      // Link this submission back to its draft (if it had one) so the
+      // funnel counts it as a completion, not an abandonment — best
+      // effort, never blocks or fails the actual registration.
+      if (clientId) {
+        try { await db.markDraftSubmitted(clientId, created.id); } catch (err) { console.error("markDraftSubmitted failed:", err.message); }
+      }
       return send(res, 201, { ok: true, id: created.id });
+    }
+
+    if (resource === "draft-registrations") {
+      if (!id && req.method === "POST") {
+        // Public, unauthenticated, but rate-limited (see ratelimit.mjs) and
+        // deliberately silent on failure from the client's point of view —
+        // this is best-effort telemetry, never something that should
+        // interrupt or error out on a real person filling out the form.
+        const ip = ratelimit.clientIp(req);
+        const gate = ratelimit.checkDraftSync(ip);
+        if (!gate.ok) return send(res, 429, { error: "Too many autosave requests." });
+
+        const clientId = typeof body.clientId === "string" ? body.clientId.trim().slice(0, 128) : "";
+        if (!clientId) return send(res, 400, { error: "Missing clientId." });
+        const data = body.data && typeof body.data === "object" ? body.data : {};
+        const currentStep = Number.isFinite(body.currentStep) ? body.currentStep : -1;
+        const furthestStep = Number.isFinite(body.furthestStep) ? body.furthestStep : currentStep;
+        const totalSteps = Number.isFinite(body.totalSteps) ? body.totalSteps : 0;
+
+        const row = await db.upsertDraftRegistration({ clientId, data, currentStep, furthestStep, totalSteps });
+        return send(res, 200, { ok: true, id: row.id });
+      }
+
+      const gate = auth.requireAuth(event);
+      if (!gate.ok) return send(res, gate.code, { error: gate.error });
+
+      if (!id && req.method === "GET") {
+        const result = await db.listDraftRegistrations({
+          includeSubmitted: query.includeSubmitted === "true",
+          limit: query.limit ? parseInt(query.limit, 10) : 200,
+          offset: query.offset ? parseInt(query.offset, 10) : 0,
+        });
+        return send(res, 200, result, { "Cache-Control": "no-store" });
+      }
+      if (id === "funnel" && req.method === "GET") {
+        return send(res, 200, await db.getFunnelStats(), { "Cache-Control": "no-store" });
+      }
+      if (id && req.method === "DELETE") {
+        const removed = await db.deleteDraftRegistration(id);
+        if (!removed) return send(res, 404, { error: "Not found." });
+        await db.logAudit(gate.session.role, "delete", "draft_registration", id);
+        return send(res, 200, { ok: true });
+      }
+      return send(res, 405, { error: "Method not allowed." });
     }
 
     if (resource === "registrations") {

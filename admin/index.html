@@ -71,6 +71,7 @@
   <div class="tabs">
     <button class="tab active" data-panel="content">Site content</button>
     <button class="tab" data-panel="registrations">Registrations</button>
+    <button class="tab" data-panel="funnel">Funnel</button>
   </div>
 
   <div class="panel active" id="panel-content">
@@ -103,6 +104,17 @@
       <p class="muted">One per line: <code>Question | Answer</code></p>
       <textarea id="c-faq" rows="6"></textarea>
       <button class="primary" id="btnSaveFaq">Save FAQ</button>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">Webinar (registration form)</h3>
+      <p class="muted">Feeds the last screen of the registration questionnaire directly — edit here, no code change needed to reuse this for a future webinar.</p>
+      <label>Sessions (one per line)</label>
+      <textarea id="c-webinar-sessions" rows="6" placeholder="Python for complete beginners"></textarea>
+      <label>Time slots — one per line: <code>Label | Date (optional)</code></label>
+      <p class="muted" style="margin-top:-0.6rem;">Date is a free-text hint shown after the label (e.g. <code>Sep 12</code>) — leave it blank if the label already says enough (like "Sat · 11:00 AM").</p>
+      <textarea id="c-webinar-slots" rows="5" placeholder="Sat · 11:00 AM | Sep 12"></textarea>
+      <button class="primary" id="btnSaveWebinar">Save webinar</button>
     </div>
 
     <div class="card">
@@ -140,6 +152,48 @@
         </table>
       </div>
     </div>
+  </div>
+
+  <div class="panel" id="panel-funnel">
+    <div id="funnelStats" class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4"></div>
+
+    <div class="card">
+      <strong>Where people drop off</strong>
+      <p class="muted" style="margin-top:0.25rem;">How far each attempt got, whether or not it was ever finished. The furthest screen someone reached only ever moves forward — going Back to fix an earlier answer doesn't count against them.</p>
+      <div id="funnelChart" class="grid gap-2" style="margin-top:1rem;"></div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <strong>In-progress &amp; abandoned</strong>
+          <p class="muted" style="margin:0.25rem 0 0;">People who started but haven't submitted yet — worth a nudge if they got most of the way through.</p>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <label class="row" style="display:flex; margin:0; gap:0.4rem; font-weight:400; color:var(--fg-muted); font-size:0.8rem;">
+            <input type="checkbox" id="funnelIncludeSubmitted" style="width:auto; margin:0;" /> include already-submitted
+          </label>
+          <button id="btnRefreshFunnel">Refresh</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table>
+          <thead><tr><th>Last active</th><th>Furthest screen</th><th>Name</th><th>Contact</th><th>Status</th><th></th></tr></thead>
+          <tbody id="funnelBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Draft detail panel — same pattern as the registration modal below. -->
+<div id="draftModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/60 p-4">
+  <div class="bg-bg-card border border-line-strong rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto p-6">
+    <div class="flex justify-between items-start mb-4 gap-4">
+      <h3 id="draftModalTitle" class="text-lg font-semibold m-0 text-fg"></h3>
+      <button id="draftModalClose">Close</button>
+    </div>
+    <div id="draftModalBody" class="grid gap-4"></div>
   </div>
 </div>
 
@@ -218,6 +272,7 @@
       tab.classList.add('active');
       document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
       if (tab.dataset.panel === 'registrations') loadRegistrations();
+      if (tab.dataset.panel === 'funnel') loadFunnel();
     });
   });
 
@@ -240,6 +295,12 @@
 
       var faq = (content.faq && content.faq.items) || [];
       document.getElementById('c-faq').value = faq.map(function (f) { return f.question + ' | ' + f.answer; }).join('\n');
+
+      var webinar = content.webinar || {};
+      document.getElementById('c-webinar-sessions').value = (webinar.sessions || []).join('\n');
+      document.getElementById('c-webinar-slots').value = (webinar.slots || []).map(function (s) {
+        return s.date ? (s.label + ' | ' + s.date) : s.label;
+      }).join('\n');
 
       document.getElementById('c-raw').value = JSON.stringify(content, null, 2);
     });
@@ -293,6 +354,17 @@
         return { id: 'f' + (i + 1), question: parts[0] || '', answer: parts[1] || '', visible: true };
       });
     }, 'FAQ');
+  });
+
+  document.getElementById('btnSaveWebinar').addEventListener('click', function () {
+    save(function (c) {
+      c.webinar = c.webinar || {};
+      c.webinar.sessions = document.getElementById('c-webinar-sessions').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+      c.webinar.slots = document.getElementById('c-webinar-slots').value.split('\n').filter(Boolean).map(function (line, i) {
+        var parts = line.split('|').map(function (s) { return s.trim(); });
+        return { id: 'slot' + (i + 1), label: parts[0] || '', date: parts[1] || '' };
+      });
+    }, 'Webinar');
   });
 
   document.getElementById('btnSaveRaw').addEventListener('click', function () {
@@ -519,6 +591,108 @@
     a.href = url; a.download = 'trivo-registrations-' + new Date().toISOString().slice(0, 10) + '.csv';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  });
+
+  // ── Funnel: drop-off chart + in-progress/abandoned drafts ─────────────
+  var STEP_LABELS = ['Personal details', 'College', 'After graduation', 'Almost there', 'AI tools', 'AI terms', 'Basic skills', 'Projects', 'Free webinar'];
+  var allDraftRows = [];
+
+  function loadFunnel() {
+    api('GET', 'draft-registrations/funnel').then(renderFunnelChart);
+    loadFunnelDrafts();
+  }
+
+  function renderFunnelChart(stats) {
+    var startCards = [
+      ['Started', stats.totalStarted],
+      ['Finished', stats.totalSubmitted],
+      ['Conversion', stats.totalStarted ? Math.round((stats.totalSubmitted / stats.totalStarted) * 100) + '%' : '\u2014']
+    ];
+    document.getElementById('funnelStats').innerHTML = startCards.map(function (c) {
+      return '<div class="bg-bg-card border border-line rounded-2xl p-4">' +
+        '<div class="text-fg-muted text-xs uppercase tracking-wide mb-1">' + escapeHtml(c[0]) + '</div>' +
+        '<div class="text-fg text-2xl font-bold">' + escapeHtml(String(c[1])) + '</div>' +
+      '</div>';
+    }).join('');
+
+    var maxCount = Math.max(1, stats.totalStarted);
+    var rows = STEP_LABELS.map(function (label, i) {
+      var reachedThisFar = 0;
+      for (var step = i; step < STEP_LABELS.length; step++) reachedThisFar += (stats.byFurthestStep[step] || 0);
+      var pct = Math.round((reachedThisFar / maxCount) * 100);
+      return '<div>' +
+        '<div class="flex justify-between text-xs mb-1"><span>' + (i + 1) + '. ' + escapeHtml(label) + '</span><span class="text-fg-muted">' + reachedThisFar + '</span></div>' +
+        '<div style="background:var(--line); border-radius:999px; height:0.5rem; overflow:hidden;"><div style="width:' + pct + '%; background:var(--accent); height:100%; border-radius:999px;"></div></div>' +
+      '</div>';
+    }).join('');
+    document.getElementById('funnelChart').innerHTML = rows || '<p class="muted">No attempts yet.</p>';
+  }
+
+  function loadFunnelDrafts() {
+    var includeSubmitted = document.getElementById('funnelIncludeSubmitted').checked;
+    api('GET', 'draft-registrations?includeSubmitted=' + includeSubmitted).then(function (res) {
+      allDraftRows = res.rows || [];
+      var body = document.getElementById('funnelBody');
+      body.innerHTML = allDraftRows.map(function (r) {
+        var d = r.data || {};
+        var when = new Date(r.updated_at).toLocaleString();
+        var stepLabel = (STEP_LABELS[r.furthest_step] || ('Screen ' + (r.furthest_step + 1))) + ' (' + (r.furthest_step + 1) + '/' + (r.total_steps || STEP_LABELS.length) + ')';
+        var contact = escapeHtml(d.email || '') + '<br><span class="muted">' + escapeHtml(d.whatsapp ? ('+91 ' + d.whatsapp) : '') + '</span>';
+        var statusLabel = r.submitted ? 'Submitted' : 'In progress';
+        var statusStyle = r.submitted ? '' : ' style="background:rgba(124,92,255,0.18); color:var(--accent);"';
+        return '<tr>' +
+          '<td>' + when + '</td>' +
+          '<td>' + escapeHtml(stepLabel) + '</td>' +
+          '<td>' + escapeHtml(d.name || '\u2014') + '</td>' +
+          '<td>' + (contact || '\u2014') + '</td>' +
+          '<td><span class="status-pill"' + statusStyle + '>' + statusLabel + '</span></td>' +
+          '<td class="row" style="gap:0.4rem; flex-wrap:nowrap;">' +
+            '<button data-view-draft="' + r.id + '">View</button>' +
+            '<button class="danger" data-del-draft="' + r.id + '">Delete</button>' +
+          '</td>' +
+          '</tr>';
+      }).join('') || '<tr><td colspan="6" class="muted">Nobody in progress right now.</td></tr>';
+
+      body.querySelectorAll('[data-del-draft]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!confirm('Delete this in-progress attempt? This just removes the drop-off record — it never touches a real registration.')) return;
+          api('DELETE', 'draft-registrations/' + btn.dataset.delDraft).then(loadFunnel);
+        });
+      });
+      body.querySelectorAll('[data-view-draft]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var r = allDraftRows.find(function (x) { return x.id === btn.dataset.viewDraft; });
+          if (r) openDraftModal(r);
+        });
+      });
+    });
+  }
+  document.getElementById('btnRefreshFunnel').addEventListener('click', loadFunnel);
+  document.getElementById('funnelIncludeSubmitted').addEventListener('change', loadFunnelDrafts);
+
+  function openDraftModal(r) {
+    var d = r.data || {};
+    document.getElementById('draftModalTitle').textContent = (d.name || 'In-progress attempt') + ' \u2014 last active ' + new Date(r.updated_at).toLocaleString();
+    var body =
+      plainSection('Contact so far', fieldRow('Name', d.name) + fieldRow('Email', d.email) + fieldRow('WhatsApp', d.whatsapp ? ('+91 ' + d.whatsapp) : '')) +
+      plainSection('Academic so far', fieldRow('College', d.college) + fieldRow('Branch', d.branch) + fieldRow('Year', d.year)) +
+      plainSection('Career so far', fieldRow('Intent', d.intent) + fieldRow('Roles', d.roles) + fieldRow('Salary expectation', d.salaryExpectation)) +
+      plainSection('Track record so far', fieldRow('GitHub', d.github) + fieldRow('Deployed', d.deployed)) +
+      plainSection('Webinar so far', fieldRow('Session', d.webinarSession) + fieldRow('Slot(s)', d.webinarSlots)) +
+      plainSection('Progress', fieldRow('Furthest screen reached', (STEP_LABELS[r.furthest_step] || '\u2014') + ' (' + (r.furthest_step + 1) + ' of ' + (r.total_steps || STEP_LABELS.length) + ')') + fieldRow('Started', new Date(r.started_at).toLocaleString()) + fieldRow('Status', r.submitted ? 'Submitted' : 'Still in progress / abandoned'));
+    document.getElementById('draftModalBody').innerHTML = body || '<p class="muted">No details captured yet.</p>';
+    var modal = document.getElementById('draftModal');
+    modal.classList.remove('hidden'); modal.classList.add('flex');
+  }
+  function closeDraftModal() {
+    var modal = document.getElementById('draftModal');
+    modal.classList.add('hidden'); modal.classList.remove('flex');
+  }
+  document.getElementById('draftModalClose').addEventListener('click', closeDraftModal);
+  document.getElementById('draftModal').addEventListener('click', function (e) { if (e.target.id === 'draftModal') closeDraftModal(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    closeDraftModal();
   });
 
   function escapeHtml(s) {

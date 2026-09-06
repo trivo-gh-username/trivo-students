@@ -64,6 +64,37 @@ export function record(ip) {
   hits.set(ip, times);
 }
 
+/**
+ * A much more generous limiter for the draft-progress autosync — this
+ * fires many times per real session (every keystroke on the first couple
+ * of screens, every selection after that), so it needs enough headroom
+ * that a genuine, fast-moving user never hits it. It exists purely to
+ * stop a scripted flood from writing garbage rows, not to throttle normal
+ * use. A sync that gets rate-limited is dropped silently client-side —
+ * never shown to the user, never blocks navigation.
+ */
+const DRAFT_SYNC_WINDOW_MS = 60 * 1000;
+const DRAFT_SYNC_MAX = 60; // ~1/second sustained, comfortably above real typing/tapping speed
+const draftHits = new Map();
+
+setInterval(() => {
+  const cutoff = Date.now() - DRAFT_SYNC_WINDOW_MS;
+  for (const [ip, times] of draftHits) {
+    const kept = times.filter((t) => t > cutoff);
+    if (kept.length) draftHits.set(ip, kept);
+    else draftHits.delete(ip);
+  }
+}, 5 * 60 * 1000).unref();
+
+export function checkDraftSync(ip) {
+  const now = Date.now();
+  const times = (draftHits.get(ip) || []).filter((t) => t > now - DRAFT_SYNC_WINDOW_MS);
+  if (times.length >= DRAFT_SYNC_MAX) return { ok: false };
+  times.push(now);
+  draftHits.set(ip, times);
+  return { ok: true };
+}
+
 /** Best-effort client IP from a Node request, accounting for Caddy's forwarded headers. */
 export function clientIp(req) {
   const xff = req.headers["x-forwarded-for"];
