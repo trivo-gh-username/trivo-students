@@ -156,21 +156,13 @@
 
   /* ── Grid-style questions rendered as stacked rows ───────────── */
   .qz-grid-list { display: grid; gap: var(--s-5); min-width: 0; }
-  /* `min-width: 0` here is the actual fix, not decoration: a CSS Grid
-     item's default min-width is `auto`, which means it refuses to shrink
-     below the intrinsic width of its content. The AI-tools row below
-     packs 5 unwrapped chips side by side specifically so they can scroll
-     horizontally *within their own row* — but without this, the grid
-     item itself was expanding to fit all 5 chips at once, dragging the
-     whole page 240px wider than the phone's screen on screen 5 (measured
-     with a real headless browser at a 375px viewport: 572px vs 375px).
-     `overflow-x: auto` on the child below only works if this row is
-     first allowed to actually be narrower than its content. */
+  /* `min-width: 0` keeps grid items allowed to shrink below content
+     intrinsic size (CSS Grid default min-width is `auto`). Still useful
+     for any future scrollable content inside a row. */
   .qz-grid-row { border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-4); background: var(--bg-raised); min-width: 0; }
   .qz-grid-row__label { font-size: var(--t-sm); font-weight: 600; margin-bottom: var(--s-3); }
-  /* Single-row, horizontally-scrollable chip strip — used for the AI
-     tools grid where each row has 5 short options that should read as
-     ONE row on a phone, not wrap onto three. */
+  /* Chip strip (used by gridRate 1–5 ratings). Scroll variant kept for
+     optional dense rows; currently unused after screen-5 moved to selects. */
   .qz-grid-row__opts--scroll {
     display: flex; flex-wrap: nowrap; gap: var(--s-2); overflow-x: auto;
     -webkit-overflow-scrolling: touch; padding-bottom: 2px; scroll-snap-type: x proximity;
@@ -392,8 +384,8 @@
       { id: 'salary', weight: 44, section: '04 \u00b7 Almost there',
         title: 'Almost there', subtitle: '',
         fields: [
-          { id: 'familyInTech', type: 'select', label: 'Do you know anyone working in an IT job?', required: false,
-            options: ['Yes', 'No', 'Not sure'] },
+          { id: 'familyInTech', type: 'select', label: 'Do you know anyone working in an IT job that mentors you?', required: false,
+            options: ['Yes, Immediate family', 'Yes, relatives or seniors', 'No'] },
           { id: 'salaryExpectation', type: 'select', label: 'How much salary do you expect from your first job?', required: true,
             options: ['Below \u20b93 LPA', '\u20b93\u20136 LPA', '\u20b96\u201312 LPA', 'Above \u20b912 LPA', 'No idea'] }
         ] },
@@ -649,18 +641,33 @@
   function renderGridField(field) {
     var current = answers[field.id] || {};
     var answeredCount = Object.keys(current).length;
-    var optsClass = field.scroll ? 'qz-grid-row__opts--scroll' : 'qz-grid-row__opts--wrap';
+    // gridSingle (AI tools on screen 5) uses native <select> dropdowns —
+    // chips were not aesthetic / hard to scan on a phone. gridRate (1–5
+    // ratings) keeps the compact chip strip.
+    var useSelects = field.type === 'gridSingle';
     return '<p class="qz-grid-progress">' + answeredCount + ' of ' + field.rows.length + ' answered</p>' +
       '<div class="qz-grid-list">' + field.rows.map(function (row, ri) {
         var selectedVal = current[row];
-        return '<div class="qz-grid-row">' +
-          '<div class="qz-grid-row__label">' + esc(row) + '</div>' +
-          '<div class="' + optsClass + '">' +
+        var controls;
+        if (useSelects) {
+          var optsHtml = '<option value="" disabled' + (selectedVal ? '' : ' selected') + ' hidden>Select\u2026</option>' +
+            field.levels.map(function (lvl) {
+              return '<option value="' + esc(lvl) + '"' + (selectedVal === lvl ? ' selected' : '') + '>' + esc(lvl) + '</option>';
+            }).join('');
+          controls = '<select class="qz-input qz-select" id="f_' + field.id + '_' + ri + '" data-field-id="' + field.id + '" data-row="' + ri + '">' + optsHtml + '</select>';
+        } else {
+          var optsClass = field.scroll ? 'qz-grid-row__opts--scroll' : 'qz-grid-row__opts--wrap';
+          controls = '<div class="' + optsClass + '">' +
             field.levels.map(function (lvl) {
               var sel = selectedVal === lvl;
               return '<button type="button" class="qz-chip' + (sel ? ' is-selected' : '') + '" data-field-id="' + field.id + '" data-row="' + ri + '" data-level="' + esc(lvl) + '">' + esc(lvl) + '</button>';
             }).join('') +
-          '</div></div>';
+          '</div>';
+        }
+        return '<div class="qz-grid-row">' +
+          '<div class="qz-grid-row__label">' + esc(row) + '</div>' +
+          controls +
+          '</div>';
       }).join('') + '</div>' + errSlot(field);
   }
 
@@ -722,7 +729,23 @@
             if (justTapped) { justTapped.classList.add('qz-just-picked'); setTimeout(function () { justTapped.classList.remove('qz-just-picked'); }, 200); }
           });
         });
-      } else if (field.type === 'gridSingle' || field.type === 'gridRate') {
+      } else if (field.type === 'gridSingle') {
+        // Dropdown version (screen 5 AI tools)
+        stage.querySelectorAll('select[data-field-id="' + field.id + '"]').forEach(function (sel) {
+          sel.addEventListener('change', function () {
+            if (isSubmitting) return;
+            var row = field.rows[Number(sel.dataset.row)];
+            answers[field.id] = answers[field.id] || {};
+            if (sel.value) answers[field.id][row] = sel.value;
+            else delete answers[field.id][row];
+            hideFieldErr(field.id);
+            // Re-render so the "X of Y answered" progress updates.
+            renderStep(step, false);
+            saveDraft();
+            syncDraftRemote(true);
+          });
+        });
+      } else if (field.type === 'gridRate') {
         stage.querySelectorAll('.qz-chip[data-field-id="' + field.id + '"]').forEach(function (chip) {
           chip.addEventListener('click', function () {
             if (isSubmitting) return;
